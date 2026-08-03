@@ -740,8 +740,9 @@
     <p class="login-lead">Acceso restringido para el equipo de SST.</p>
     <form onsubmit="doLogin(event)" id="loginForm">
       <div class="field">
-        <label>Correo</label>
-        <input type="email" id="loginEmail" placeholder="admin@foca.co" autocomplete="username" required autofocus />
+        <label>Correo <span style="color:var(--ink-mute); font-weight:400; text-transform:none; letter-spacing:0;">(opcional)</span></label>
+        <input type="email" id="loginEmail" placeholder="admin@foca.co" autocomplete="username" autofocus />
+        <p style="font-size:11px; color:var(--ink-mute); margin:4px 0 0;">Si lo dejás vacío, entra con la contraseña maestra del sistema</p>
       </div>
       <div class="field">
         <label>Contraseña</label>
