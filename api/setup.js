@@ -92,15 +92,23 @@ export default async function handler(req, res) {
       }
     }
 
-    // === SEED: capacitación inicial ===
-    const [cap] = await sql`
-      INSERT INTO capacitaciones (nombre, horas, vigencia_anos, categoria, empresa)
-      VALUES ('Violencia Sexual', '4 horas', 2, 'SST', 'AMBAS')
-      ON CONFLICT DO NOTHING
-      RETURNING id
+    // === SEED: capacitación inicial (solo si no existe) ===
+    let capId;
+    const capExistente = await sql`
+      SELECT id FROM capacitaciones WHERE nombre = 'Violencia Sexual' LIMIT 1
     `;
+    if (capExistente.length > 0) {
+      capId = capExistente[0].id;
+    } else {
+      const [nueva] = await sql`
+        INSERT INTO capacitaciones (nombre, horas, vigencia_anos, categoria, empresa)
+        VALUES ('Violencia Sexual', '4 horas', 2, 'SST', 'AMBAS')
+        RETURNING id
+      `;
+      capId = nueva.id;
+    }
 
-    // === SEED: personas de prueba ===
+    // === SEED: personas de prueba (upsert por cédula) ===
     await sql`
       INSERT INTO personas (cedula, tipo_doc, nombre, cargo, empresa) VALUES
         ('1045737800', 'C.C', 'ACOSTA MORELO ANDREA DEL CARMEN', 'Aprendiz', 'FOCA'),
@@ -108,19 +116,24 @@ export default async function handler(req, res) {
       ON CONFLICT (cedula) DO NOTHING
     `;
 
-    // === SEED: certificados de prueba (si hay capacitación) ===
-    const capId = cap?.id ?? (
-      await sql`SELECT id FROM capacitaciones WHERE nombre = 'Violencia Sexual' LIMIT 1`
-    )[0]?.id;
-
+    // === SEED: certificados de prueba (solo si no existen ya para esta persona+cap+fecha) ===
     if (capId) {
-      await sql`
-        INSERT INTO certificados (cedula, capacitacion_id, ciudad, fecha, valido_hasta, pdf_url)
-        VALUES
-          ('1045737800', ${capId}, 'BARRANQUILLA', '2026-03-15', '2028-03-15', 'pdfs/1045737800.pdf'),
-          ('1002242858', ${capId}, 'BARRANQUILLA', '2026-03-15', '2028-03-15', 'pdfs/1002242858.pdf')
-        ON CONFLICT DO NOTHING
-      `;
+      const seedCerts = [
+        ['1045737800', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
+        ['1002242858', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
+      ];
+      for (const [cedula, ciudad, fecha, vence] of seedCerts) {
+        const existe = await sql`
+          SELECT id FROM certificados
+          WHERE cedula = ${cedula} AND capacitacion_id = ${capId} AND fecha = ${fecha}
+        `;
+        if (existe.length === 0) {
+          await sql`
+            INSERT INTO certificados (cedula, capacitacion_id, ciudad, fecha, valido_hasta, pdf_url)
+            VALUES (${cedula}, ${capId}, ${ciudad}, ${fecha}, ${vence}, ${'pdfs/' + cedula + '.pdf'})
+          `;
+        }
+      }
     }
 
     // Contar totales para confirmar
