@@ -62,6 +62,12 @@ export default async function handler(req, res) {
       )
     `;
 
+    // Columnas nuevas para plantillas por empresa (migration idempotente)
+    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_foca_nombre TEXT`;
+    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_foca_data  TEXT`;
+    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_viu_nombre  TEXT`;
+    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_viu_data   TEXT`;
+
     await sql`
       CREATE TABLE IF NOT EXISTS certificados (
         id SERIAL PRIMARY KEY,

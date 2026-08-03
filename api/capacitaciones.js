@@ -26,9 +26,13 @@ export default async function handler(req, res) {
           empresa = ${body.empresa ?? actual.empresa},
           categoria = ${body.categoria ?? actual.categoria},
           descripcion = ${body.descripcion ?? actual.descripcion},
-          activa = ${body.activa ?? actual.activa}
+          activa = ${body.activa ?? actual.activa},
+          plantilla_foca_nombre = ${body.plantilla_foca_nombre ?? actual.plantilla_foca_nombre},
+          plantilla_foca_data   = ${body.plantilla_foca_data   ?? actual.plantilla_foca_data},
+          plantilla_viu_nombre  = ${body.plantilla_viu_nombre  ?? actual.plantilla_viu_nombre},
+          plantilla_viu_data    = ${body.plantilla_viu_data    ?? actual.plantilla_viu_data}
         WHERE id = ${id}
-        RETURNING *
+        RETURNING id, nombre, horas, empresa
       `;
       return json(res, { ok: true, capacitacion: cap });
     }
@@ -47,9 +51,28 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+      // Si piden ?descargar=foca|viu junto con ?id=N → devolver la plantilla
+      const descargar = req.query.descargar;
+      if (id && descargar) {
+        const col = descargar === 'viu' ? 'plantilla_viu' : 'plantilla_foca';
+        const rows = descargar === 'viu'
+          ? await sql`SELECT plantilla_viu_nombre AS nombre, plantilla_viu_data AS data FROM capacitaciones WHERE id = ${id}`
+          : await sql`SELECT plantilla_foca_nombre AS nombre, plantilla_foca_data AS data FROM capacitaciones WHERE id = ${id}`;
+        if (!rows.length || !rows[0].data) return error(res, 'Sin plantilla', 404);
+        const buf = Buffer.from(rows[0].data, 'base64');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${rows[0].nombre || 'plantilla.docx'}"`);
+        return res.end(buf);
+      }
+
+      // GET normal — lista sin la data pesada, solo nombres
       const rows = await sql`
         SELECT c.id, c.nombre, c.descripcion, c.horas, c.vigencia_anos,
-               c.empresa, c.categoria, c.plantilla_url, c.activa,
+               c.empresa, c.categoria, c.activa,
+               c.plantilla_foca_nombre,
+               c.plantilla_viu_nombre,
+               (c.plantilla_foca_data IS NOT NULL) AS tiene_plantilla_foca,
+               (c.plantilla_viu_data  IS NOT NULL) AS tiene_plantilla_viu,
                COUNT(ct.id)::int AS emitidos
         FROM capacitaciones c
         LEFT JOIN certificados ct ON ct.capacitacion_id = c.id
@@ -68,7 +91,10 @@ export default async function handler(req, res) {
         empresa = 'AMBAS',
         categoria = 'SST',
         descripcion = '',
-        plantilla_url = null,
+        plantilla_foca_nombre = null,
+        plantilla_foca_data   = null,   // base64 del .docx (opcional)
+        plantilla_viu_nombre  = null,
+        plantilla_viu_data    = null,
       } = body;
 
       if (!nombre || !horas) {
@@ -77,11 +103,15 @@ export default async function handler(req, res) {
 
       const [cap] = await sql`
         INSERT INTO capacitaciones
-          (nombre, horas, vigencia_anos, empresa, categoria, descripcion, plantilla_url)
+          (nombre, horas, vigencia_anos, empresa, categoria, descripcion,
+           plantilla_foca_nombre, plantilla_foca_data,
+           plantilla_viu_nombre,  plantilla_viu_data)
         VALUES
           (${nombre}, ${horas}, ${vigencia_anos}, ${empresa},
-           ${categoria}, ${descripcion}, ${plantilla_url})
-        RETURNING *
+           ${categoria}, ${descripcion},
+           ${plantilla_foca_nombre}, ${plantilla_foca_data},
+           ${plantilla_viu_nombre},  ${plantilla_viu_data})
+        RETURNING id, nombre, horas, vigencia_anos, empresa, categoria
       `;
       return json(res, { ok: true, capacitacion: cap }, 201);
     }

@@ -1201,42 +1201,62 @@
         </div>
       </div>
 
+      <div class="tpl-info" style="margin-bottom:16px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>
+          <strong>Plantillas por empresa:</strong> subí una plantilla <strong>FOCA</strong> y una <strong>VIU</strong>.
+          En emisión mixta cada persona recibe la plantilla de su empresa automáticamente.
+          Cualquiera de las dos es opcional (podés dejar solo una si el curso es exclusivo).
+        </div>
+      </div>
+
       <div class="field">
-        <label>Plantilla del diploma <span style="color:var(--danger); font-weight:400; text-transform:none; letter-spacing:0;">*obligatorio</span></label>
-        <div class="tpl-uploader" onclick="simulateUpload(event)">
+        <label>Plantilla FOCA <span style="color:var(--ink-mute); font-weight:400; text-transform:none; letter-spacing:0;">(para asistentes de FOCA)</span></label>
+        <div class="tpl-uploader" onclick="document.getElementById('tplFocaFile').click()">
           <div class="tpl-icon">
-            <svg width="42" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-              <line x1="9" y1="18" x2="15" y2="18"/>
-              <line x1="9" y1="12" x2="11" y2="12"/>
-            </svg>
+            <svg width="36" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
           <div class="tpl-text">
-            <div class="tpl-title">Arrastrá tu plantilla acá</div>
-            <div class="tpl-sub">o hacé click para seleccionar del computador</div>
-            <div class="tpl-formats">Formatos aceptados: <strong>.docx</strong> · <strong>.pdf</strong> · <strong>.png</strong></div>
+            <div class="tpl-title">Plantilla FOCA</div>
+            <div class="tpl-sub">Click para seleccionar el archivo</div>
+            <div class="tpl-formats">Formato: <strong>.docx</strong></div>
           </div>
         </div>
-        <div class="tpl-info">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          En el momento de emitir, el sistema tomará esta plantilla y le insertará automáticamente:
-          <strong>nombre</strong>, <strong>cédula</strong>, <strong>ciudad</strong>, <strong>fecha</strong>, <strong>vigencia</strong> y el <strong>QR de verificación</strong>.
-        </div>
-
-        <!-- Preview de plantilla ya cargada (aparece al arrastrar/seleccionar) -->
-        <div class="tpl-preview" id="tplPreview" style="display:none;">
+        <input type="file" id="tplFocaFile" accept=".docx" style="display:none;" onchange="handleTplFile(event, 'foca')" />
+        <div class="tpl-preview" id="tplFocaPreview" style="display:none;">
           <div class="tpl-preview-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
           <div class="tpl-preview-info">
-            <div class="tpl-preview-name">plantilla-nueva-capacitacion.docx</div>
-            <div class="tpl-preview-meta">44 KB · Landscape · Cargada correctamente</div>
+            <div class="tpl-preview-name" id="tplFocaName"></div>
+            <div class="tpl-preview-meta" id="tplFocaMeta"></div>
           </div>
-          <button class="btn btn-sm" onclick="event.stopPropagation(); document.getElementById('tplPreview').style.display='none';">
-            Cambiar
-          </button>
+          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); limpiarTpl('foca');">Quitar</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Plantilla VIU <span style="color:var(--ink-mute); font-weight:400; text-transform:none; letter-spacing:0;">(para asistentes de VIU)</span></label>
+        <div class="tpl-uploader" onclick="document.getElementById('tplViuFile').click()">
+          <div class="tpl-icon">
+            <svg width="36" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="tpl-text">
+            <div class="tpl-title">Plantilla VIU</div>
+            <div class="tpl-sub">Click para seleccionar el archivo</div>
+            <div class="tpl-formats">Formato: <strong>.docx</strong></div>
+          </div>
+        </div>
+        <input type="file" id="tplViuFile" accept=".docx" style="display:none;" onchange="handleTplFile(event, 'viu')" />
+        <div class="tpl-preview" id="tplViuPreview" style="display:none;">
+          <div class="tpl-preview-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="tpl-preview-info">
+            <div class="tpl-preview-name" id="tplViuName"></div>
+            <div class="tpl-preview-meta" id="tplViuMeta"></div>
+          </div>
+          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); limpiarTpl('viu');">Quitar</button>
         </div>
       </div>
 
@@ -1447,22 +1467,30 @@
     try {
       const {capacitaciones} = await api('/api/capacitaciones');
       const grid = document.getElementById('capacitacionesGrid');
-      const cards = capacitaciones.map(c => `
+      const cards = capacitaciones.map(c => {
+        const plantillasBadges = [];
+        if (c.tiene_plantilla_foca) plantillasBadges.push('<span class="pill pill-foca" title="Plantilla FOCA cargada">📄 FOCA</span>');
+        if (c.tiene_plantilla_viu)  plantillasBadges.push('<span class="pill pill-viu"  title="Plantilla VIU cargada">📄 VIU</span>');
+        const plantillasHTML = plantillasBadges.length
+          ? `<div style="display:flex; gap:6px; margin-top:6px;">${plantillasBadges.join('')}</div>`
+          : `<div style="font-size:11px; color:var(--warn); margin-top:6px;">⚠ Sin plantillas — click Editar para cargar</div>`;
+        return `
         <div class="course-card">
           <div class="course-preview"><div class="doc-icon"></div></div>
           <div class="course-info">
             <h3 class="course-name">${escapeHtml(c.nombre)}</h3>
             <div class="course-meta">${escapeHtml(c.horas)} · ${c.emitidos} emitidos · <span class="pill pill-active" style="margin-left:4px;">${escapeHtml(c.empresa)}</span></div>
+            ${plantillasHTML}
           </div>
           <div class="course-actions">
             <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${c.vigencia_anos} años</span>
             <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" onclick='editarCapacitacion(${JSON.stringify(c)})'>Editar</button>
+              <button class="btn btn-sm" onclick='editarCapacitacion(${JSON.stringify(c).replace(/'/g, "&#39;")})'>Editar</button>
               <button class="btn btn-sm btn-danger" onclick="borrarCapacitacion(${c.id}, ${JSON.stringify(c.nombre)}, ${c.emitidos})">Borrar</button>
             </div>
           </div>
         </div>
-      `).join('');
+      `; }).join('');
       const btnNueva = `
         <div class="course-card" style="border-style: dashed; background: transparent; cursor:pointer;" onclick="openModal('modalCourse')">
           <div class="course-preview" style="background: transparent;">
@@ -1480,6 +1508,57 @@
   }
 
   let editandoCapId = null;
+  // Contenido temporal de las plantillas cargadas (base64) mientras el modal está abierto
+  let tplBuffer = { foca: null, viu: null };
+
+  async function handleTplFile(e, empresa) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      toast('El archivo es muy grande (máx 1 MB). Comprimí el .docx.', 'err');
+      e.target.value = '';
+      return;
+    }
+    try {
+      const b64 = await fileToBase64(file);
+      tplBuffer[empresa] = { nombre: file.name, data: b64, size: file.size };
+      // Mostrar preview
+      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Name`).textContent = file.name;
+      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Meta`).textContent =
+        `${(file.size / 1024).toFixed(1)} KB · lista para guardar`;
+      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Preview`).style.display = 'flex';
+    } catch (err) {
+      toast('Error leyendo el archivo: ' + err.message, 'err');
+    }
+  }
+
+  function limpiarTpl(empresa) {
+    tplBuffer[empresa] = { nombre: '', data: '' }; // enviar vacío = borrar en el server
+    document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Preview`).style.display = 'none';
+    document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}File`).value = '';
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const s = reader.result;
+        // s = "data:application/...;base64,XXXX" → nos quedamos solo con XXXX
+        const idx = s.indexOf(',');
+        resolve(idx >= 0 ? s.slice(idx + 1) : s);
+      };
+      reader.onerror = () => reject(new Error('No se pudo leer'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function resetTplBuffer() {
+    tplBuffer = { foca: null, viu: null };
+    document.getElementById('tplFocaPreview').style.display = 'none';
+    document.getElementById('tplViuPreview').style.display = 'none';
+    document.getElementById('tplFocaFile').value = '';
+    document.getElementById('tplViuFile').value = '';
+  }
 
   async function crearCapacitacion(e) {
     e.preventDefault();
@@ -1491,6 +1570,19 @@
       categoria: document.getElementById('capCategoria').value,
       descripcion: document.getElementById('capDescripcion').value.trim(),
     };
+    // Adjuntar plantillas solo si el usuario tocó el buffer
+    if (tplBuffer.foca) {
+      body.plantilla_foca_nombre = tplBuffer.foca.nombre;
+      body.plantilla_foca_data   = tplBuffer.foca.data;
+    }
+    if (tplBuffer.viu) {
+      body.plantilla_viu_nombre = tplBuffer.viu.nombre;
+      body.plantilla_viu_data   = tplBuffer.viu.data;
+    }
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
     try {
       if (editandoCapId) {
         await api(`/api/capacitaciones?id=${editandoCapId}`, {method: 'PATCH', body: JSON.stringify(body)});
@@ -1501,11 +1593,14 @@
       }
       closeModal('modalCourse');
       document.querySelector('#modalCourse form').reset();
+      resetTplBuffer();
       editandoCapId = null;
       document.querySelector('#modalCourse .modal-title').textContent = 'Nueva capacitación';
       await loadCapacitaciones();
     } catch (err) {
       toast(err.message, 'err');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Crear capacitación'; }
     }
   }
 
@@ -1518,6 +1613,19 @@
     document.getElementById('capEmpresa').value = c.empresa || 'AMBAS';
     document.getElementById('capCategoria').value = c.categoria || 'SST';
     document.getElementById('capDescripcion').value = c.descripcion || '';
+
+    // Mostrar estado de plantillas existentes
+    resetTplBuffer();
+    if (c.tiene_plantilla_foca) {
+      document.getElementById('tplFocaName').textContent = c.plantilla_foca_nombre || 'plantilla-foca.docx';
+      document.getElementById('tplFocaMeta').textContent = 'Guardada · subí otra para reemplazar';
+      document.getElementById('tplFocaPreview').style.display = 'flex';
+    }
+    if (c.tiene_plantilla_viu) {
+      document.getElementById('tplViuName').textContent = c.plantilla_viu_nombre || 'plantilla-viu.docx';
+      document.getElementById('tplViuMeta').textContent = 'Guardada · subí otra para reemplazar';
+      document.getElementById('tplViuPreview').style.display = 'flex';
+    }
     openModal('modalCourse');
   }
 
@@ -1689,6 +1797,12 @@
           </div>
           <div style="font-size:14px; color:var(--ink);">
             <div><strong>${res.certificados_emitidos}</strong> certificados emitidos</div>
+            ${res.por_empresa ? `
+              <div style="display:flex; gap:16px; margin:6px 0; font-size:13px;">
+                ${res.por_empresa.FOCA > 0 ? `<span class="pill pill-foca">FOCA: ${res.por_empresa.FOCA}</span>` : ''}
+                ${res.por_empresa.VIU  > 0 ? `<span class="pill pill-viu">VIU: ${res.por_empresa.VIU}</span>` : ''}
+              </div>
+            ` : ''}
             <div><strong>${res.personas_creadas}</strong> personas nuevas creadas</div>
             ${res.omitidos > 0 ? `<div style="color:var(--warn);"><strong>${res.omitidos}</strong> omitidos (ver detalles)</div>` : ''}
           </div>

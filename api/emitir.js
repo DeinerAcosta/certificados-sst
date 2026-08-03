@@ -51,6 +51,7 @@ export default async function handler(req, res) {
       personas_creadas: 0,
       certificados_emitidos: 0,
       omitidos: 0,
+      por_empresa: { FOCA: 0, VIU: 0 },
       errores: [],
     };
 
@@ -114,6 +115,7 @@ export default async function handler(req, res) {
              ${fecha}, ${valido_hasta}, ${'pdfs/' + cedula + '.pdf'}, ${quienEmite})
         `;
         resultados.certificados_emitidos++;
+        resultados.por_empresa[empresa] = (resultados.por_empresa[empresa] || 0) + 1;
       } catch (e) {
         resultados.errores.push({ cedula, motivo: e.message });
         resultados.omitidos++;
