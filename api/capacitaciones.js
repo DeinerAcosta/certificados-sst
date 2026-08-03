@@ -3,8 +3,12 @@
 //   body: { nombre, horas, vigencia_anos, empresa, categoria, descripcion, plantilla_url }
 
 import { sql, json, error } from './_db.js';
+import { requireAuth, isAuthenticated } from './_auth.js';
 
 export default async function handler(req, res) {
+  // GET es público (listado de cursos disponibles); POST solo admin
+  if (req.method !== 'GET' && !requireAuth(req, res)) return;
+
   try {
     if (req.method === 'GET') {
       const rows = await sql`

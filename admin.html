@@ -106,6 +106,21 @@
   }
   .login-brand h1 { font-family: var(--serif); font-size: 20px; margin: 0; font-weight: 600; }
   .login-brand .sub { font-size: 11px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 1.4px; margin-top: 4px; }
+
+  .login-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .login-error svg { flex-shrink: 0; }
   .login-title { font-family: var(--serif); font-size: 20px; margin: 0 0 6px; font-weight: 500; }
   .login-lead { color: var(--ink-mute); margin: 0 0 24px; font-size: 13px; }
 
@@ -196,6 +211,19 @@
   .user-chip-info { flex: 1; min-width: 0; }
   .user-chip .name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .user-chip .role { font-size: 10.5px; color: var(--ink-mute); }
+  .btn-logout {
+    background: transparent;
+    border: 0;
+    color: var(--ink-mute);
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+  .btn-logout:hover { background: var(--danger-bg); color: var(--danger); }
 
   /* ================ MAIN CONTENT ================ */
   main.content { padding: 24px 32px 40px; overflow-x: auto; }
@@ -709,21 +737,21 @@
       </div>
     </div>
     <h2 class="login-title">Iniciar sesión</h2>
-    <p class="login-lead">Ingresá tus credenciales para acceder al panel de administración.</p>
-    <form onsubmit="doLogin(event)">
+    <p class="login-lead">Acceso restringido para el equipo de SST.</p>
+    <form onsubmit="doLogin(event)" id="loginForm">
       <div class="field">
-        <label>Correo</label>
-        <input type="email" placeholder="admin@foca.co" value="admin@foca.co" />
+        <label>Contraseña de administrador</label>
+        <input type="password" id="loginPassword" placeholder="••••••••••••" autocomplete="current-password" required autofocus />
       </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" placeholder="••••••••" value="demo123" />
+      <div class="login-error" id="loginError" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="loginErrorMsg">Contraseña incorrecta</span>
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; margin-top:8px;">
+      <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; margin-top:8px;" id="loginBtn">
         Ingresar al panel
       </button>
-      <p style="text-align:center; margin-top: 20px; font-size:12px; color:var(--ink-mute);">
-        <strong>DEMO</strong> · Cualquier email + contraseña funciona
+      <p style="text-align:center; margin-top:20px; font-size:12px; color:var(--ink-mute);">
+        <a href="/" style="color:var(--brand); text-decoration:none;">← Volver al portal público</a>
       </p>
     </form>
   </div>
@@ -770,11 +798,16 @@
     </button>
 
     <div class="user-chip">
-      <div class="avatar">DA</div>
+      <div class="avatar">SST</div>
       <div class="user-chip-info">
-        <div class="name">Deiner Acosta</div>
-        <div class="role">Admin SST</div>
+        <div class="name">Administrador</div>
+        <div class="role">Sesión activa</div>
       </div>
+      <button class="btn-logout" onclick="doLogout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </div>
   </aside>
 
@@ -1327,11 +1360,66 @@
 </div>
 
 <script>
-  function doLogin(e) {
+  async function doLogin(e) {
     e.preventDefault();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    const errBox = document.getElementById('loginError');
+    const errMsg = document.getElementById('loginErrorMsg');
+
+    errBox.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({password}),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errMsg.textContent = data.error || 'Error de autenticación';
+        errBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = 'Ingresar al panel';
+        document.getElementById('loginPassword').select();
+        return;
+      }
+
+      // Éxito → mostrar el panel
+      showAdminPanel();
+    } catch (err) {
+      errMsg.textContent = 'Error de conexión: ' + err.message;
+      errBox.style.display = 'flex';
+      btn.disabled = false;
+      btn.textContent = 'Ingresar al panel';
+    }
+  }
+
+  function showAdminPanel() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').classList.add('show');
   }
+
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if (data.authenticated) showAdminPanel();
+    } catch { /* usa el login si no puede verificar */ }
+  }
+
+  async function doLogout() {
+    try {
+      await fetch('/api/logout', {method: 'POST'});
+    } catch {}
+    location.reload();
+  }
+
+  // Al cargar la página, verificar si ya hay sesión activa
+  checkAuth();
 
   document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
     btn.addEventListener('click', () => {

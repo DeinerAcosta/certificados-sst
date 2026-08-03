@@ -4,8 +4,12 @@
 // DELETE /api/personas?cc=X  → desactiva (soft delete)
 
 import { sql, json, error } from './_db.js';
+import { requireAuth } from './_auth.js';
 
 export default async function handler(req, res) {
+  // Todas las operaciones sobre personas requieren admin autenticado
+  if (!requireAuth(req, res)) return;
+
   try {
     if (req.method === 'GET') {
       const search = String(req.query.q || '').trim();

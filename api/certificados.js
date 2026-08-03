@@ -3,8 +3,12 @@
 //   body masivo:      { cedulas: [...], capacitacion_id, ciudad, fecha, valido_hasta }
 
 import { sql, json, error } from './_db.js';
+import { requireAuth } from './_auth.js';
 
 export default async function handler(req, res) {
+  // Ver y emitir certificados requiere admin
+  if (!requireAuth(req, res)) return;
+
   try {
     if (req.method === 'GET') {
       const rows = await sql`

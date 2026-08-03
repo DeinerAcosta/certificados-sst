@@ -257,6 +257,27 @@
   }
   .footer-note strong { color: var(--ink-soft); font-weight: 600; }
 
+  .admin-link-wrap {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--line);
+    text-align: center;
+  }
+  .admin-link {
+    display: inline-block;
+    color: var(--brand);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all .15s;
+  }
+  .admin-link:hover {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+    color: var(--brand-2);
+  }
+
   /* --- RESULT VIEW (estilo CAEM) ---------------------- */
   .result { display: none; max-width: 960px; margin: 0 auto; }
   .result.show { display: block; }
@@ -514,6 +535,10 @@
 
     <div class="footer-note">
       Sistema oficial de <strong>Grupo FOCA / VIU · SST</strong> — Los certificados emitidos son verificables desde cualquier dispositivo.
+    </div>
+
+    <div class="admin-link-wrap">
+      <a href="/admin" class="admin-link">¿Eres administrador? Ingresa aquí →</a>
     </div>
   </section>
 
