@@ -37,6 +37,18 @@ export default async function handler(req, res) {
       LIMIT 10
     `;
 
+    // Ciudades ya usadas (para el datalist de sugerencias)
+    const ciudadesUsadas = await sql`
+      SELECT DISTINCT ciudad FROM certificados
+      WHERE ciudad IS NOT NULL AND ciudad != ''
+      ORDER BY ciudad
+    `;
+    const CIUDADES_DEFAULT = ['BARRANQUILLA','CARTAGENA','SANTA MARTA','VALLEDUPAR','RIOHACHA'];
+    const ciudades = Array.from(new Set([
+      ...ciudadesUsadas.map(c => c.ciudad.toUpperCase().trim()),
+      ...CIUDADES_DEFAULT,
+    ])).sort();
+
     return json(res, {
       totales: {
         personas,
@@ -46,6 +58,7 @@ export default async function handler(req, res) {
         ultimo_mes,
       },
       cursos_activos: cursos.map(c => c.nombre),
+      ciudades,
       actividad_reciente: actividad,
     });
   } catch (e) {
