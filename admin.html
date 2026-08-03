@@ -740,8 +740,12 @@
     <p class="login-lead">Acceso restringido para el equipo de SST.</p>
     <form onsubmit="doLogin(event)" id="loginForm">
       <div class="field">
-        <label>Contraseña de administrador</label>
-        <input type="password" id="loginPassword" placeholder="••••••••••••" autocomplete="current-password" required autofocus />
+        <label>Correo</label>
+        <input type="email" id="loginEmail" placeholder="admin@foca.co" autocomplete="username" required autofocus />
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••••••••" autocomplete="current-password" required />
       </div>
       <div class="login-error" id="loginError" style="display:none;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -774,9 +778,9 @@
       <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       Dashboard
     </button>
-    <button class="nav-item" data-page="personas">
+    <button class="nav-item" data-page="usuarios">
       <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Personas
+      Usuarios
     </button>
     <button class="nav-item" data-page="capacitaciones">
       <svg class="icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
@@ -825,24 +829,24 @@
 
       <div class="stats">
         <div class="stat">
-          <div class="label">Personas registradas</div>
-          <div class="value">334</div>
-          <div class="delta">+3 este mes</div>
+          <div class="label">Personas certificadas</div>
+          <div class="value" id="statPersonas">—</div>
+          <div class="delta">Únicas en la base de datos</div>
         </div>
         <div class="stat gold">
           <div class="label">Certificados emitidos</div>
-          <div class="value">417</div>
-          <div class="delta">+12 esta semana</div>
+          <div class="value" id="statCertificados">—</div>
+          <div class="delta" id="statCertificadosDelta">Total histórico</div>
         </div>
         <div class="stat green">
           <div class="label">Capacitaciones activas</div>
-          <div class="value">3</div>
-          <div class="delta">Violencia Sexual · Bioseguridad · RCP</div>
+          <div class="value" id="statCapacitaciones">—</div>
+          <div class="delta" id="statCursosNombres">Cursos disponibles</div>
         </div>
         <div class="stat warn">
-          <div class="label">Verificaciones (mes)</div>
-          <div class="value">128</div>
-          <div class="delta">Consultas al portal público</div>
+          <div class="label">Usuarios del panel</div>
+          <div class="value" id="statUsuarios">—</div>
+          <div class="delta">Administradores activos</div>
         </div>
       </div>
 
@@ -860,31 +864,8 @@
                 <th>Por</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="mono">30/07/2026 10:24</td>
-                <td>Emisión masiva</td>
-                <td>334 certificados · Violencia Sexual</td>
-                <td>Deiner Acosta</td>
-              </tr>
-              <tr>
-                <td class="mono">29/07/2026 15:11</td>
-                <td>Nueva capacitación</td>
-                <td>Curso de Bioseguridad Hospitalaria</td>
-                <td>Deiner Acosta</td>
-              </tr>
-              <tr>
-                <td class="mono">29/07/2026 09:47</td>
-                <td>Carga masiva</td>
-                <td>Excel de 334 personas de FOCA</td>
-                <td>Deiner Acosta</td>
-              </tr>
-              <tr>
-                <td class="mono">28/07/2026 14:22</td>
-                <td>Persona agregada</td>
-                <td>PEREZ RUIZ JUAN · C.C 1123456789</td>
-                <td>Deiner Acosta</td>
-              </tr>
+            <tbody id="actividadRows">
+              <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--ink-mute);">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -892,40 +873,16 @@
     </div>
 
     <!-- PERSONAS -->
-    <div class="page" id="page-personas">
+    <div class="page" id="page-usuarios">
       <div class="page-header">
         <div>
-          <h1 class="page-title">Personas</h1>
-          <p class="page-lead">334 personas registradas · FOCA + VIU</p>
+          <h1 class="page-title">Usuarios</h1>
+          <p class="page-lead">Personas del equipo SST que pueden acceder al panel administrativo.</p>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" onclick="openModal('modalUpload')">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Subir Excel
-          </button>
-          <button class="btn btn-primary" onclick="openModal('modalPerson')">
-            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Agregar persona
-          </button>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="search-box">
-          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Buscar por nombre o cédula…" />
-        </div>
-        <select class="filter-select">
-          <option>Todas las empresas</option>
-          <option>FOCA</option>
-          <option>VIU</option>
-        </select>
-        <select class="filter-select">
-          <option>Todos los cargos</option>
-          <option>Enfermería</option>
-          <option>Médico</option>
-          <option>Administrativo</option>
-        </select>
+        <button class="btn btn-primary" onclick="openModal('modalUser')">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo usuario
+        </button>
       </div>
 
       <div class="card">
@@ -933,52 +890,15 @@
           <table>
             <thead>
               <tr>
-                <th>Cédula</th>
-                <th>Nombre completo</th>
-                <th>Cargo</th>
-                <th>Empresa</th>
-                <th>Certificados</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Último acceso</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="mono">1045737800</td>
-                <td>ACOSTA MORELO ANDREA DEL CARMEN</td>
-                <td>Aprendiz</td>
-                <td><span class="pill pill-foca">FOCA</span></td>
-                <td>1</td>
-                <td><button class="btn btn-sm">Editar</button></td>
-              </tr>
-              <tr>
-                <td class="mono">1010020009</td>
-                <td>ACOSTA VILORIA JESUS ALBERTO</td>
-                <td>Aux. Enfermería Cirugía</td>
-                <td><span class="pill pill-foca">FOCA</span></td>
-                <td>1</td>
-                <td><button class="btn btn-sm">Editar</button></td>
-              </tr>
-              <tr>
-                <td class="mono">42874211</td>
-                <td>GONZALEZ PEREZ MARIA ROSA</td>
-                <td>Oftalmóloga</td>
-                <td><span class="pill pill-foca">FOCA</span></td>
-                <td>2</td>
-                <td><button class="btn btn-sm">Editar</button></td>
-              </tr>
-              <tr>
-                <td class="mono">6813307</td>
-                <td>ESCAF JARABA LUIS JOSE</td>
-                <td>Director Médico</td>
-                <td><span class="pill pill-viu">VIU</span></td>
-                <td>3</td>
-                <td><button class="btn btn-sm">Editar</button></td>
-              </tr>
-              <tr>
-                <td colspan="6" style="text-align:center; padding: 20px; color: var(--ink-mute);">
-                  … 330 personas más
-                </td>
-              </tr>
+            <tbody id="usuariosRows">
+              <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink-mute);">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -998,48 +918,9 @@
         </button>
       </div>
 
-      <div class="courses-grid">
-        <div class="course-card">
-          <div class="course-preview"><div class="doc-icon"></div></div>
-          <div class="course-info">
-            <h3 class="course-name">Violencia Sexual</h3>
-            <div class="course-meta">4 horas · 334 emitidos · <span class="pill pill-active" style="margin-left:4px;">Activo</span></div>
-          </div>
-          <div class="course-actions">
-            <button class="btn btn-sm">Editar</button>
-            <button class="btn btn-sm">Emitir</button>
-          </div>
-        </div>
-        <div class="course-card">
-          <div class="course-preview"><div class="doc-icon"></div></div>
-          <div class="course-info">
-            <h3 class="course-name">Bioseguridad Hospitalaria</h3>
-            <div class="course-meta">6 horas · 68 emitidos · <span class="pill pill-active" style="margin-left:4px;">Activo</span></div>
-          </div>
-          <div class="course-actions">
-            <button class="btn btn-sm">Editar</button>
-            <button class="btn btn-sm">Emitir</button>
-          </div>
-        </div>
-        <div class="course-card">
-          <div class="course-preview"><div class="doc-icon"></div></div>
-          <div class="course-info">
-            <h3 class="course-name">RCP Básico</h3>
-            <div class="course-meta">8 horas · 15 emitidos · <span class="pill pill-active" style="margin-left:4px;">Activo</span></div>
-          </div>
-          <div class="course-actions">
-            <button class="btn btn-sm">Editar</button>
-            <button class="btn btn-sm">Emitir</button>
-          </div>
-        </div>
-        <div class="course-card" style="border-style: dashed; background: transparent;" onclick="openModal('modalCourse')">
-          <div class="course-preview" style="background: transparent;">
-            <div style="font-size:40px; color: var(--ink-mute);">+</div>
-          </div>
-          <div class="course-info" style="text-align:center;">
-            <h3 class="course-name" style="color: var(--ink-mute);">Nueva capacitación</h3>
-            <div class="course-meta">Subir plantilla y configurar</div>
-          </div>
+      <div class="courses-grid" id="capacitacionesGrid">
+        <div style="grid-column:1/-1; text-align:center; padding:32px; color:var(--ink-mute);">
+          Cargando…
         </div>
       </div>
     </div>
@@ -1049,48 +930,64 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Emitir Certificados</h1>
-          <p class="page-lead">Elegí un curso, la fecha y las personas. Los certificados se generan al instante.</p>
+          <p class="page-lead">Cargá la lista de asistentes de una capacitación. Se crean las personas + certificados en la DB.</p>
         </div>
       </div>
-      <div class="card">
-        <div class="card-body">
-          <div class="field-row">
-            <div class="field">
-              <label>Capacitación</label>
-              <select>
-                <option>Violencia Sexual (4h)</option>
-                <option>Bioseguridad Hospitalaria (6h)</option>
-                <option>RCP Básico (8h)</option>
-              </select>
+      <form onsubmit="emitirCertificados(event)">
+        <div class="card">
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <label>Capacitación</label>
+                <select id="emitCap" required>
+                  <option value="">-- Seleccioná --</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Ciudad</label>
+                <select id="emitCiudad" required>
+                  <option>BARRANQUILLA</option>
+                  <option>CARTAGENA</option>
+                  <option>SANTA MARTA</option>
+                  <option>VALLEDUPAR</option>
+                  <option>RIOHACHA</option>
+                </select>
+              </div>
             </div>
-            <div class="field">
-              <label>Fecha de realización</label>
-              <input type="date" value="2026-07-30" />
+            <div class="field-row">
+              <div class="field">
+                <label>Fecha de realización</label>
+                <input type="date" id="emitFecha" required />
+              </div>
+              <div class="field">
+                <label>Fecha de vencimiento (opcional)</label>
+                <input type="date" id="emitVence" />
+              </div>
             </div>
+
+            <div class="field">
+              <label>Asistentes</label>
+              <p style="font-size:12px; color:var(--ink-mute); margin:0 0 8px;">
+                Pegá una línea por persona con este formato: <code>cédula, nombre, cargo, empresa</code>
+                (empresa: <strong>FOCA</strong> o <strong>VIU</strong>)
+              </p>
+              <textarea id="emitAsistentes" rows="8"
+                placeholder="1045737800, ACOSTA MORELO ANDREA DEL CARMEN, Aprendiz, FOCA
+1002242858, ALVAREZ BARRIOS YINARIS, Auxiliar de Enfermería, FOCA
+1123456789, PEREZ RUIZ JUAN, Médico General, VIU"
+                style="width:100%; padding:12px; font-family:var(--mono); font-size:13px;
+                       background:var(--surface); color:var(--ink); border:1px solid var(--line);
+                       border-radius:6px; resize:vertical;" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="emitBtn" style="width:100%; padding:12px; margin-top:8px;">
+              Emitir certificados
+            </button>
+
+            <div id="emitResult" style="display:none; margin-top:16px;"></div>
           </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Fecha de vigencia</label>
-              <input type="date" value="2026-07-30" />
-            </div>
-            <div class="field">
-              <label>Fecha de vencimiento (opcional)</label>
-              <input type="date" value="2028-07-30" />
-            </div>
-          </div>
-          <div class="field">
-            <label>Personas a certificar</label>
-            <div class="upload-zone">
-              <div class="upload-icon">👥</div>
-              <div class="upload-text">Cargar Excel con lista de asistentes</div>
-              <div class="upload-hint">O elegir personas manualmente (buscador)</div>
-            </div>
-          </div>
-          <button class="btn btn-primary" style="width:100%; padding: 12px; margin-top: 8px;">
-            Generar certificados
-          </button>
         </div>
-      </div>
+      </form>
     </div>
 
     <!-- HISTORIAL -->
@@ -1098,9 +995,8 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Historial de emisiones</h1>
-          <p class="page-lead">Registro completo de todas las emisiones. Descargable como Excel.</p>
+          <p class="page-lead">Registro completo de certificados emitidos.</p>
         </div>
-        <button class="btn">Exportar Excel</button>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -1108,38 +1004,16 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Fecha emisión</th>
+                <th>Fecha</th>
                 <th>Capacitación</th>
                 <th>Persona</th>
-                <th>Estado</th>
+                <th>Cédula</th>
+                <th>Ciudad</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="mono">#2891</td>
-                <td>19/05/2026</td>
-                <td>Soporte Vital Básico BLS/ACL</td>
-                <td>SONIA STELLA ESCAF JARAVA</td>
-                <td><span class="pill pill-active">Vigente</span></td>
-                <td><button class="btn btn-sm">Ver PDF</button></td>
-              </tr>
-              <tr>
-                <td class="mono">#2890</td>
-                <td>29/07/2026</td>
-                <td>Bioseguridad Hospitalaria</td>
-                <td>PEREZ RUIZ JUAN</td>
-                <td><span class="pill pill-active">Vigente</span></td>
-                <td><button class="btn btn-sm">Ver PDF</button></td>
-              </tr>
-              <tr>
-                <td class="mono">#2889</td>
-                <td>20/01/2026</td>
-                <td>Violencia Sexual</td>
-                <td>ACOSTA MORELO ANDREA</td>
-                <td><span class="pill pill-active">Vigente</span></td>
-                <td><button class="btn btn-sm">Ver PDF</button></td>
-              </tr>
+            <tbody id="historialRows">
+              <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--ink-mute);">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1199,70 +1073,45 @@
 
 <!-- ================= MODALS ================= -->
 
-<!-- Modal: Agregar persona -->
-<div class="modal-bg" id="modalPerson">
+<!-- Modal: Nuevo usuario admin -->
+<div class="modal-bg" id="modalUser">
   <div class="modal">
     <div class="modal-header">
-      <h3 class="modal-title">Agregar persona</h3>
-      <button class="modal-close" onclick="closeModal('modalPerson')">×</button>
+      <h3 class="modal-title">Nuevo usuario administrador</h3>
+      <button class="modal-close" onclick="closeModal('modalUser')">×</button>
     </div>
-    <div class="modal-body">
-      <div class="field">
-        <label>Nombre completo</label>
-        <input type="text" placeholder="APELLIDOS NOMBRES" />
-      </div>
-      <div class="field-row">
+    <form onsubmit="crearUsuario(event)">
+      <div class="modal-body">
         <div class="field">
-          <label>Tipo documento</label>
-          <select><option>C.C</option><option>C.E</option><option>PA</option></select>
+          <label>Nombre completo</label>
+          <input type="text" id="userNombre" placeholder="María Rodríguez" required />
         </div>
         <div class="field">
-          <label>Número documento</label>
-          <input type="text" placeholder="1234567890" />
+          <label>Correo</label>
+          <input type="email" id="userEmail" placeholder="maria@foca.co" required />
         </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Empresa</label>
-          <select><option>FOCA</option><option>VIU</option></select>
+        <div class="field-row">
+          <div class="field">
+            <label>Contraseña inicial</label>
+            <input type="password" id="userPassword" placeholder="Mínimo 6 caracteres" minlength="6" required />
+          </div>
+          <div class="field">
+            <label>Rol</label>
+            <select id="userRol">
+              <option value="admin">Admin (acceso total)</option>
+              <option value="editor">Editor (solo emitir)</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label>Cargo</label>
-          <input type="text" placeholder="Ej: Enfermera Cirugía" />
-        </div>
+        <p style="font-size:12px; color:var(--ink-mute); margin:8px 0 0;">
+          El usuario podrá cambiar su contraseña después del primer ingreso.
+        </p>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modalPerson')">Cancelar</button>
-      <button class="btn btn-primary">Guardar persona</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Subir Excel -->
-<div class="modal-bg" id="modalUpload">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Cargar personas desde Excel</h3>
-      <button class="modal-close" onclick="closeModal('modalUpload')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="upload-zone">
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">Arrastrá tu archivo Excel aquí</div>
-        <div class="upload-hint">o hacé click para seleccionar · .xlsx o .csv</div>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('modalUser')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Crear usuario</button>
       </div>
-      <p style="font-size: 12px; color: var(--ink-mute); margin-top: 14px; line-height: 1.6;">
-        <strong style="color: var(--ink-soft);">Formato esperado:</strong>
-        columnas <code>Tipo documento</code>, <code>Numero documento</code>,
-        <code>Apellidos / Nombres</code>, <code>Cargo</code>. Coincide con el formato
-        que ya usás en <code>PLANTA FOCA.xlsx</code>.
-      </p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modalUpload')">Cancelar</button>
-      <button class="btn btn-primary">Procesar y agregar</button>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -1273,34 +1122,35 @@
       <h3 class="modal-title">Nueva capacitación</h3>
       <button class="modal-close" onclick="closeModal('modalCourse')">×</button>
     </div>
+    <form onsubmit="crearCapacitacion(event)">
     <div class="modal-body">
       <div class="field">
         <label>Nombre de la capacitación</label>
-        <input type="text" placeholder="Ej: Manejo Seguro de Residuos Hospitalarios" />
+        <input type="text" id="capNombre" placeholder="Ej: Manejo Seguro de Residuos Hospitalarios" required />
       </div>
       <div class="field-row">
         <div class="field">
           <label>Intensidad horaria</label>
-          <input type="text" placeholder="4 horas" />
+          <input type="text" id="capHoras" placeholder="4 horas" required />
         </div>
         <div class="field">
           <label>Vigencia (años)</label>
-          <input type="number" placeholder="2" value="2" min="1" />
+          <input type="number" id="capVigencia" placeholder="2" value="2" min="1" />
         </div>
       </div>
       <div class="field-row">
         <div class="field">
           <label>Empresa emisora</label>
-          <select>
-            <option>FOCA — Fundación Oftalmológica del Caribe</option>
-            <option>VIU — Clínica Oftalmológica Internacional</option>
-            <option>Ambas (FOCA + VIU)</option>
+          <select id="capEmpresa">
+            <option value="AMBAS">Ambas (FOCA + VIU)</option>
+            <option value="FOCA">FOCA — Fundación Oftalmológica del Caribe</option>
+            <option value="VIU">VIU — Clínica Oftalmológica Internacional</option>
           </select>
         </div>
         <div class="field">
           <label>Categoría</label>
-          <select>
-            <option>SST — Seguridad y Salud</option>
+          <select id="capCategoria">
+            <option>SST</option>
             <option>Clínica</option>
             <option>Administrativa</option>
             <option>Otra</option>
@@ -1349,19 +1199,57 @@
 
       <div class="field">
         <label>Descripción (opcional)</label>
-        <textarea rows="2" placeholder="Descripción breve que aparecerá en el portal público"></textarea>
+        <textarea id="capDescripcion" rows="2" placeholder="Descripción breve"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modalCourse')">Cancelar</button>
-      <button class="btn btn-primary">Crear capacitación</button>
+      <button type="button" class="btn" onclick="closeModal('modalCourse')">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Crear capacitación</button>
     </div>
+    </form>
   </div>
 </div>
 
 <script>
+  // ==================== HELPERS ====================
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: {'Content-Type': 'application/json', ...(opts.headers || {})},
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    return data;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('es-CO', {day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleString('es-CO', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+
+  function toast(msg, tipo = 'ok') {
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = `position:fixed; bottom:24px; right:24px; z-index:1000;
+      padding:12px 20px; border-radius:6px; font-size:14px; font-weight:500;
+      background:${tipo === 'ok' ? 'var(--success)' : 'var(--danger)'}; color:white;
+      box-shadow:var(--shadow-lg); animation:slideIn .2s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ==================== LOGIN ====================
   async function doLogin(e) {
     e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
     const btn = document.getElementById('loginBtn');
     const errBox = document.getElementById('loginError');
@@ -1372,70 +1260,318 @@
     btn.textContent = 'Verificando...';
 
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({password}),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        errMsg.textContent = data.error || 'Error de autenticación';
-        errBox.style.display = 'flex';
-        btn.disabled = false;
-        btn.textContent = 'Ingresar al panel';
-        document.getElementById('loginPassword').select();
-        return;
-      }
-
-      // Éxito → mostrar el panel
-      showAdminPanel();
+      await api('/api/login', {method: 'POST', body: JSON.stringify({email, password})});
+      await enterAdminPanel();
     } catch (err) {
-      errMsg.textContent = 'Error de conexión: ' + err.message;
+      errMsg.textContent = err.message;
       errBox.style.display = 'flex';
       btn.disabled = false;
       btn.textContent = 'Ingresar al panel';
+      document.getElementById('loginPassword').select();
     }
   }
 
-  function showAdminPanel() {
+  async function enterAdminPanel() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').classList.add('show');
+    await loadDashboard();
   }
 
   async function checkAuth() {
     try {
-      const res = await fetch('/api/me');
-      const data = await res.json();
-      if (data.authenticated) showAdminPanel();
-    } catch { /* usa el login si no puede verificar */ }
+      const data = await api('/api/me');
+      if (data.authenticated) await enterAdminPanel();
+    } catch {}
   }
 
   async function doLogout() {
-    try {
-      await fetch('/api/logout', {method: 'POST'});
-    } catch {}
+    try { await api('/api/logout', {method: 'POST'}); } catch {}
     location.reload();
   }
 
-  // Al cargar la página, verificar si ya hay sesión activa
-  checkAuth();
-
+  // ==================== NAVEGACIÓN ====================
   document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const page = document.getElementById('page-' + btn.dataset.page);
-      if (page) page.classList.add('active');
+      const pageId = 'page-' + btn.dataset.page;
+      document.getElementById(pageId)?.classList.add('active');
+
+      // Cargar datos de la sección al navegar
+      const loaders = {
+        'page-dashboard': loadDashboard,
+        'page-usuarios': loadUsuarios,
+        'page-capacitaciones': loadCapacitaciones,
+        'page-emitir': loadEmitirForm,
+        'page-historial': loadHistorial,
+      };
+      if (loaders[pageId]) await loaders[pageId]();
     });
   });
 
+  // ==================== DASHBOARD ====================
+  async function loadDashboard() {
+    try {
+      const s = await api('/api/stats');
+      document.getElementById('statPersonas').textContent = s.totales.personas;
+      document.getElementById('statCertificados').textContent = s.totales.certificados;
+      document.getElementById('statCertificadosDelta').textContent =
+        s.totales.ultimo_mes > 0 ? `+${s.totales.ultimo_mes} en los últimos 30 días` : 'Total histórico';
+      document.getElementById('statCapacitaciones').textContent = s.totales.capacitaciones;
+      document.getElementById('statCursosNombres').textContent =
+        s.cursos_activos.length ? s.cursos_activos.slice(0, 3).join(' · ') : 'Ninguna creada aún';
+      document.getElementById('statUsuarios').textContent = s.totales.usuarios;
+
+      const tbody = document.getElementById('actividadRows');
+      if (!s.actividad_reciente.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin actividad todavía</td></tr>`;
+      } else {
+        tbody.innerHTML = s.actividad_reciente.map(a => `
+          <tr>
+            <td class="mono">${fmtDateTime(a.fecha)}</td>
+            <td>${a.accion}</td>
+            <td>${a.detalle}</td>
+            <td>${a.por}</td>
+          </tr>
+        `).join('');
+      }
+    } catch (e) {
+      toast('Error cargando dashboard: ' + e.message, 'err');
+    }
+  }
+
+  // ==================== USUARIOS ====================
+  async function loadUsuarios() {
+    try {
+      const {usuarios} = await api('/api/usuarios');
+      const tbody = document.getElementById('usuariosRows');
+      if (!usuarios.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin usuarios creados</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = usuarios.map(u => `
+        <tr>
+          <td><strong>${escapeHtml(u.nombre)}</strong></td>
+          <td class="mono">${escapeHtml(u.email)}</td>
+          <td><span class="pill ${u.rol === 'admin' ? 'pill-foca' : 'pill-viu'}">${u.rol}</span></td>
+          <td class="mono">${fmtDateTime(u.last_login_at)}</td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${u.id}, '${escapeHtml(u.nombre)}')">
+              Desactivar
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      toast('Error cargando usuarios: ' + e.message, 'err');
+    }
+  }
+
+  async function crearUsuario(e) {
+    e.preventDefault();
+    const body = {
+      nombre: document.getElementById('userNombre').value.trim(),
+      email:  document.getElementById('userEmail').value.trim().toLowerCase(),
+      password: document.getElementById('userPassword').value,
+      rol:    document.getElementById('userRol').value,
+    };
+    try {
+      await api('/api/usuarios', {method: 'POST', body: JSON.stringify(body)});
+      closeModal('modalUser');
+      document.querySelector('#modalUser form').reset();
+      await loadUsuarios();
+      toast('Usuario creado ✓');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  async function eliminarUsuario(id, nombre) {
+    if (!confirm(`¿Desactivar el usuario "${nombre}"? Ya no podrá iniciar sesión.`)) return;
+    try {
+      await api(`/api/usuarios?id=${id}`, {method: 'DELETE'});
+      await loadUsuarios();
+      toast('Usuario desactivado');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  // ==================== CAPACITACIONES ====================
+  async function loadCapacitaciones() {
+    try {
+      const {capacitaciones} = await api('/api/capacitaciones');
+      const grid = document.getElementById('capacitacionesGrid');
+      const cards = capacitaciones.map(c => `
+        <div class="course-card">
+          <div class="course-preview"><div class="doc-icon"></div></div>
+          <div class="course-info">
+            <h3 class="course-name">${escapeHtml(c.nombre)}</h3>
+            <div class="course-meta">${escapeHtml(c.horas)} · ${c.emitidos} emitidos · <span class="pill pill-active" style="margin-left:4px;">${escapeHtml(c.empresa)}</span></div>
+          </div>
+          <div class="course-actions">
+            <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${c.vigencia_anos} años</span>
+          </div>
+        </div>
+      `).join('');
+      const btnNueva = `
+        <div class="course-card" style="border-style: dashed; background: transparent; cursor:pointer;" onclick="openModal('modalCourse')">
+          <div class="course-preview" style="background: transparent;">
+            <div style="font-size:40px; color: var(--ink-mute);">+</div>
+          </div>
+          <div class="course-info" style="text-align:center;">
+            <h3 class="course-name" style="color: var(--ink-mute);">Nueva capacitación</h3>
+            <div class="course-meta">Configurar</div>
+          </div>
+        </div>`;
+      grid.innerHTML = cards + btnNueva;
+    } catch (e) {
+      toast('Error cargando capacitaciones: ' + e.message, 'err');
+    }
+  }
+
+  async function crearCapacitacion(e) {
+    e.preventDefault();
+    const body = {
+      nombre: document.getElementById('capNombre').value.trim(),
+      horas:  document.getElementById('capHoras').value.trim(),
+      vigencia_anos: parseInt(document.getElementById('capVigencia').value, 10) || 2,
+      empresa: document.getElementById('capEmpresa').value,
+      categoria: document.getElementById('capCategoria').value,
+      descripcion: document.getElementById('capDescripcion').value.trim(),
+    };
+    try {
+      await api('/api/capacitaciones', {method: 'POST', body: JSON.stringify(body)});
+      closeModal('modalCourse');
+      document.querySelector('#modalCourse form').reset();
+      await loadCapacitaciones();
+      toast('Capacitación creada ✓');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  // ==================== EMITIR ====================
+  async function loadEmitirForm() {
+    try {
+      const {capacitaciones} = await api('/api/capacitaciones');
+      const sel = document.getElementById('emitCap');
+      sel.innerHTML = '<option value="">-- Seleccioná --</option>' +
+        capacitaciones.filter(c => c.activa).map(c =>
+          `<option value="${c.id}">${escapeHtml(c.nombre)} · ${escapeHtml(c.horas)}</option>`
+        ).join('');
+      // Fecha default = hoy
+      if (!document.getElementById('emitFecha').value) {
+        document.getElementById('emitFecha').value = new Date().toISOString().slice(0, 10);
+      }
+    } catch (e) {
+      toast('Error: ' + e.message, 'err');
+    }
+  }
+
+  async function emitirCertificados(e) {
+    e.preventDefault();
+    const cap = parseInt(document.getElementById('emitCap').value, 10);
+    const ciudad = document.getElementById('emitCiudad').value;
+    const fecha = document.getElementById('emitFecha').value;
+    const vence = document.getElementById('emitVence').value || null;
+    const raw = document.getElementById('emitAsistentes').value.trim();
+
+    if (!cap) return toast('Seleccioná una capacitación', 'err');
+    if (!fecha) return toast('Ingresá la fecha', 'err');
+    if (!raw) return toast('Cargá al menos una persona', 'err');
+
+    // Parsear el textarea: cada línea es "cedula, nombre, cargo, empresa"
+    const asistentes = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
+      const parts = line.split(',').map(p => p.trim());
+      return {
+        cedula:  parts[0] || '',
+        nombre:  parts[1] || '',
+        cargo:   parts[2] || '',
+        empresa: (parts[3] || 'FOCA').toUpperCase(),
+      };
+    });
+
+    const btn = document.getElementById('emitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Emitiendo…';
+    const result = document.getElementById('emitResult');
+    result.style.display = 'none';
+
+    try {
+      const res = await api('/api/emitir', {
+        method: 'POST',
+        body: JSON.stringify({
+          capacitacion_id: cap,
+          ciudad,
+          fecha,
+          valido_hasta: vence,
+          asistentes,
+        }),
+      });
+
+      result.innerHTML = `
+        <div style="padding:16px 20px; background:var(--success-bg); border:1px solid color-mix(in srgb, var(--success) 30%, transparent); border-radius:6px;">
+          <div style="font-family:var(--serif); font-size:16px; font-weight:600; color:var(--success); margin-bottom:8px;">
+            ✓ Emisión completada
+          </div>
+          <div style="font-size:14px; color:var(--ink);">
+            <div><strong>${res.certificados_emitidos}</strong> certificados emitidos</div>
+            <div><strong>${res.personas_creadas}</strong> personas nuevas creadas</div>
+            ${res.omitidos > 0 ? `<div style="color:var(--warn);"><strong>${res.omitidos}</strong> omitidos (ver detalles)</div>` : ''}
+          </div>
+          ${res.errores.length ? `
+            <details style="margin-top:12px;">
+              <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft);">Ver detalles de omitidos</summary>
+              <ul style="margin:8px 0 0; padding-left:20px; font-size:12.5px;">
+                ${res.errores.map(e => `<li><code>${escapeHtml(e.cedula)}</code>: ${escapeHtml(e.motivo)}</li>`).join('')}
+              </ul>
+            </details>
+          ` : ''}
+        </div>
+      `;
+      result.style.display = 'block';
+      document.getElementById('emitAsistentes').value = '';
+      toast(`${res.certificados_emitidos} certificados emitidos`);
+    } catch (err) {
+      toast('Error: ' + err.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Emitir certificados';
+    }
+  }
+
+  // ==================== HISTORIAL ====================
+  async function loadHistorial() {
+    try {
+      const {certificados} = await api('/api/certificados');
+      const tbody = document.getElementById('historialRows');
+      if (!certificados.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin emisiones todavía</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = certificados.map(c => `
+        <tr>
+          <td class="mono">#${c.id}</td>
+          <td>${fmtDate(c.fecha)}</td>
+          <td>${escapeHtml(c.capacitacion)}</td>
+          <td>${escapeHtml(c.nombre)}</td>
+          <td class="mono">${escapeHtml(c.cedula)}</td>
+          <td>${escapeHtml(c.ciudad || '—')}</td>
+          <td><a href="${c.pdf_url}" target="_blank" class="btn btn-sm" style="text-decoration:none;">Ver PDF</a></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      toast('Error cargando historial: ' + e.message, 'err');
+    }
+  }
+
+  // ==================== MODAL / UI ====================
   function openModal(id) { document.getElementById(id).classList.add('show'); }
   function closeModal(id) { document.getElementById(id).classList.remove('show'); }
   function simulateUpload(e) {
     e.stopPropagation();
-    // En producción abriría el file picker; para el demo mostramos el preview
     const preview = document.getElementById('tplPreview');
     if (preview) preview.style.display = 'flex';
   }
@@ -1444,4 +1580,14 @@
       if (e.target === m) m.classList.remove('show');
     });
   });
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  // Al cargar la página, verificar si ya hay sesión activa
+  checkAuth();
 </script>

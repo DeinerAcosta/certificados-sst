@@ -1,9 +1,12 @@
-// GET /api/me  → devuelve { authenticated: true|false }
-// Usado por el admin panel para saber si mostrar el login o el dashboard.
+// GET /api/me  → { authenticated, usuario }
 
-import { isAuthenticated } from './_auth.js';
+import { getUser } from './_auth.js';
 
 export default async function handler(req, res) {
+  const user = getUser(req);
   res.status(200).setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify({ authenticated: isAuthenticated(req) }));
+  res.end(JSON.stringify({
+    authenticated: !!user,
+    usuario: user ? { email: user.email, rol: user.rol } : null,
+  }));
 }

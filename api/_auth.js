@@ -21,36 +21,32 @@ function getSecret() {
   return s;
 }
 
-export function signToken() {
+export function signToken(payload = {}) {
+  // payload = { id, email, rol }
   const now = Date.now();
-  const payload = `admin:${now}`;
-  const sig = crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
-  return `${payload}:${sig}`;
+  const data = Buffer.from(JSON.stringify({ ...payload, iat: now })).toString('base64url');
+  const sig = crypto.createHmac('sha256', getSecret()).update(data).digest('hex');
+  return `${data}.${sig}`;
 }
 
 export function verifyToken(token) {
-  if (!token || typeof token !== 'string') return false;
-  const parts = token.split(':');
-  if (parts.length !== 3) return false;
-  const [role, ts, sig] = parts;
-  if (role !== 'admin') return false;
-
-  const timestamp = parseInt(ts, 10);
-  if (isNaN(timestamp)) return false;
-  const ageMs = Date.now() - timestamp;
-  if (ageMs < 0 || ageMs > SESSION_HOURS * 3600 * 1000) return false;
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [data, sig] = parts;
 
   try {
-    const expected = crypto.createHmac('sha256', getSecret())
-      .update(`${role}:${ts}`)
-      .digest('hex');
-    // Constant-time comparison to prevent timing attacks
+    const expected = crypto.createHmac('sha256', getSecret()).update(data).digest('hex');
     const a = Buffer.from(sig, 'hex');
     const b = Buffer.from(expected, 'hex');
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+    const ageMs = Date.now() - payload.iat;
+    if (ageMs < 0 || ageMs > SESSION_HOURS * 3600 * 1000) return null;
+    return payload;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -77,17 +73,22 @@ export function parseCookies(cookieHeader) {
   );
 }
 
-export function isAuthenticated(req) {
+export function getUser(req) {
   const cookies = parseCookies(req.headers.cookie);
   return verifyToken(cookies[COOKIE_NAME]);
 }
 
+export function isAuthenticated(req) {
+  return getUser(req) !== null;
+}
+
 /**
  * Middleware helper — llamar al inicio de un handler protegido.
- * Devuelve true si continua, false si ya respondió con 401.
+ * Devuelve el user si continua, false si ya respondió con 401.
  */
 export function requireAuth(req, res) {
-  if (isAuthenticated(req)) return true;
+  const user = getUser(req);
+  if (user) return user;
   res.status(401).setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ error: 'No autenticado. Iniciá sesión.' }));
   return false;

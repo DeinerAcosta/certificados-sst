@@ -3,6 +3,14 @@
 // Después podés borrar este archivo o dejarlo (es idempotente).
 
 import { sql, json, error } from './_db.js';
+import crypto from 'crypto';
+
+// Utilidad: hash de password (scrypt built-in en Node)
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -11,6 +19,22 @@ export default async function handler(req, res) {
 
   try {
     // === TABLAS ===
+
+    // Usuarios administradores del panel
+    await sql`
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        nombre TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        rol TEXT DEFAULT 'admin' CHECK (rol IN ('admin', 'editor')),
+        activo BOOLEAN DEFAULT TRUE,
+        last_login_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+
+    // Personas que asistieron a alguna capacitación (destinatarios de certificados)
     await sql`
       CREATE TABLE IF NOT EXISTS personas (
         cedula TEXT PRIMARY KEY,
@@ -55,6 +79,19 @@ export default async function handler(req, res) {
     await sql`CREATE INDEX IF NOT EXISTS idx_cert_cedula ON certificados(cedula)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_cert_capacitacion ON certificados(capacitacion_id)`;
 
+    // === SEED: usuario admin inicial (de ADMIN_PASSWORD env var) ===
+    const adminPass = process.env.ADMIN_PASSWORD;
+    if (adminPass) {
+      const existing = await sql`SELECT id FROM usuarios WHERE email = 'admin@foca.co'`;
+      if (existing.length === 0) {
+        const hash = hashPassword(adminPass);
+        await sql`
+          INSERT INTO usuarios (email, nombre, password_hash, rol)
+          VALUES ('admin@foca.co', 'Administrador SST', ${hash}, 'admin')
+        `;
+      }
+    }
+
     // === SEED: capacitación inicial ===
     const [cap] = await sql`
       INSERT INTO capacitaciones (nombre, horas, vigencia_anos, categoria, empresa)
@@ -87,6 +124,7 @@ export default async function handler(req, res) {
     }
 
     // Contar totales para confirmar
+    const [{ usuarios }] = await sql`SELECT COUNT(*)::int AS usuarios FROM usuarios`;
     const [{ personas }] = await sql`SELECT COUNT(*)::int AS personas FROM personas`;
     const [{ capacitaciones }] = await sql`SELECT COUNT(*)::int AS capacitaciones FROM capacitaciones`;
     const [{ certificados }] = await sql`SELECT COUNT(*)::int AS certificados FROM certificados`;
@@ -94,7 +132,7 @@ export default async function handler(req, res) {
     return json(res, {
       ok: true,
       message: 'Base de datos inicializada correctamente',
-      totales: { personas, capacitaciones, certificados },
+      totales: { usuarios, personas, capacitaciones, certificados },
     });
   } catch (e) {
     return error(res, `Setup falló: ${e.message}`);
