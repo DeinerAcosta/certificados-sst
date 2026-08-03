@@ -10,15 +10,15 @@ export default async function handler(req, res) {
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS config_kv (
-        key TEXT PRIMARY KEY,
-        value TEXT,
+        clave TEXT PRIMARY KEY,
+        valor TEXT,
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
     if (req.method === 'GET') {
-      const rows = await sql`SELECT key, value FROM config_kv`;
-      const kv = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      const rows = await sql`SELECT clave, valor FROM config_kv`;
+      const kv = Object.fromEntries(rows.map(r => [r.clave, r.valor]));
 
       // Valores por defecto (calculados en runtime)
       const host = req.headers.host || '';
@@ -46,9 +46,9 @@ export default async function handler(req, res) {
         if (k in body) {
           const v = String(body[k] ?? '');
           await sql`
-            INSERT INTO config_kv (key, value, updated_at)
+            INSERT INTO config_kv (clave, valor, updated_at)
             VALUES (${k}, ${v}, NOW())
-            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+            ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, updated_at = NOW()
           `;
         }
       }

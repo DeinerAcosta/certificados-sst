@@ -19,19 +19,30 @@ export default async function handler(req, res) {
 
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const body = await readBody(req);
+      // Traer la fila actual y mergear solo con los campos provistos
+      const [actual] = await sql`SELECT * FROM capacitaciones WHERE id = ${id}`;
+      if (!actual) return error(res, 'No existe', 404);
+
+      const nombre        = body.nombre        ?? actual.nombre;
+      const horas         = body.horas         ?? actual.horas;
+      const vigencia_anos = body.vigencia_anos ?? actual.vigencia_anos;
+      const empresa       = body.empresa       ?? actual.empresa;
+      const categoria     = body.categoria     ?? actual.categoria;
+      const descripcion   = body.descripcion   ?? actual.descripcion;
+      const activa        = body.activa        ?? actual.activa;
+
       const [cap] = await sql`
         UPDATE capacitaciones SET
-          nombre = COALESCE(${body.nombre ?? null}, nombre),
-          horas = COALESCE(${body.horas ?? null}, horas),
-          vigencia_anos = COALESCE(${body.vigencia_anos ?? null}, vigencia_anos),
-          empresa = COALESCE(${body.empresa ?? null}, empresa),
-          categoria = COALESCE(${body.categoria ?? null}, categoria),
-          descripcion = COALESCE(${body.descripcion ?? null}, descripcion),
-          activa = COALESCE(${body.activa ?? null}, activa)
+          nombre = ${nombre},
+          horas = ${horas},
+          vigencia_anos = ${vigencia_anos},
+          empresa = ${empresa},
+          categoria = ${categoria},
+          descripcion = ${descripcion},
+          activa = ${activa}
         WHERE id = ${id}
         RETURNING *
       `;
-      if (!cap) return error(res, 'No existe', 404);
       return json(res, { ok: true, capacitacion: cap });
     }
 
