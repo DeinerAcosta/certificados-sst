@@ -946,14 +946,14 @@
                 </select>
               </div>
               <div class="field">
-                <label>Ciudad</label>
-                <select id="emitCiudad" required>
-                  <option>BARRANQUILLA</option>
-                  <option>CARTAGENA</option>
-                  <option>SANTA MARTA</option>
-                  <option>VALLEDUPAR</option>
-                  <option>RIOHACHA</option>
-                </select>
+                <label>Ciudad de la capacitación</label>
+                <input type="text" id="emitCiudad" list="ciudadesList" required
+                       placeholder="Ej: BARRANQUILLA"
+                       style="text-transform:uppercase;" />
+                <datalist id="ciudadesList"></datalist>
+                <p style="font-size:11px; color:var(--ink-mute); margin:4px 0 0;">
+                  Escribí cualquier ciudad. Aparecen sugerencias con las ciudades ya usadas.
+                </p>
               </div>
             </div>
             <div class="field-row">
@@ -1538,12 +1538,24 @@
   // ==================== EMITIR ====================
   async function loadEmitirForm() {
     try {
-      const {capacitaciones} = await api('/api/capacitaciones');
+      // Cargar capacitaciones y ciudades en paralelo
+      const [capsData, ciudadesData] = await Promise.all([
+        api('/api/capacitaciones'),
+        api('/api/ciudades').catch(() => ({ciudades: []})),
+      ]);
+
       const sel = document.getElementById('emitCap');
       sel.innerHTML = '<option value="">-- Seleccioná --</option>' +
-        capacitaciones.filter(c => c.activa).map(c =>
+        capsData.capacitaciones.filter(c => c.activa).map(c =>
           `<option value="${c.id}">${escapeHtml(c.nombre)} · ${escapeHtml(c.horas)}</option>`
         ).join('');
+
+      // Poblar datalist de ciudades (sugerencias)
+      const dl = document.getElementById('ciudadesList');
+      if (dl) {
+        dl.innerHTML = (ciudadesData.ciudades || []).map(c => `<option value="${escapeHtml(c)}">`).join('');
+      }
+
       // Fecha default = hoy
       if (!document.getElementById('emitFecha').value) {
         document.getElementById('emitFecha').value = new Date().toISOString().slice(0, 10);
