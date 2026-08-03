@@ -1,0 +1,12 @@
+{
+  "name": "certificados-sst",
+  "version": "1.0.0",
+  "description": "Portal de verificacion de certificados FOCA/VIU - SST",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}

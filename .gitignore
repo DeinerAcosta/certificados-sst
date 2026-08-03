@@ -1,0 +1,33 @@
+# Sistema
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Word intermedios (los .docx generados se convierten a PDF y luego se descartan)
+pdfs/*.docx
+pdfs/_qr-*.png
+pdfs/~$*
+
+# Node / Vercel
+node_modules/
+.vercel/
+.env
+.env*.local
+.next/
+
+# Carpetas de prueba / cache
+pruebas/
+assets/logos/web/*.b64
