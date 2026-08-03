@@ -1,5 +1,6 @@
 <title>Admin · Certificados FOCA</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <style>
   :root {
@@ -967,15 +968,38 @@
             </div>
 
             <div class="field">
-              <label>Asistentes</label>
+              <label>Cargar asistentes desde Excel</label>
+              <div class="tpl-uploader" onclick="document.getElementById('excelFile').click()">
+                <div class="tpl-icon">
+                  <svg width="42" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <path d="M9 15h6M9 18h6M9 12h3"/>
+                  </svg>
+                </div>
+                <div class="tpl-text">
+                  <div class="tpl-title">Subí el Excel de asistentes</div>
+                  <div class="tpl-sub">o hacé click para seleccionar del computador</div>
+                  <div class="tpl-formats">Formatos aceptados: <strong>.xlsx</strong> · <strong>.xls</strong> · <strong>.csv</strong></div>
+                </div>
+              </div>
+              <input type="file" id="excelFile" accept=".xlsx,.xls,.csv"
+                     style="display:none;" onchange="cargarExcelAsistentes(event)" />
+              <p style="font-size:11px; color:var(--ink-mute); margin:8px 0 0;">
+                <strong>Columnas esperadas:</strong> Cédula, Nombre, Cargo, Empresa
+                &nbsp;·&nbsp; Se detectan automáticamente sinónimos como "Numero documento", "Apellidos / Nombres", etc.
+              </p>
+            </div>
+
+            <div class="field">
+              <label>Asistentes cargados <span id="emitCount" style="color:var(--brand); font-weight:600;"></span></label>
               <p style="font-size:12px; color:var(--ink-mute); margin:0 0 8px;">
-                Pegá una línea por persona con este formato: <code>cédula, nombre, cargo, empresa</code>
-                (empresa: <strong>FOCA</strong> o <strong>VIU</strong>)
+                Podés editar aquí antes de emitir. Una línea por persona: <code>cédula, nombre, cargo, empresa</code>
               </p>
               <textarea id="emitAsistentes" rows="8"
                 placeholder="1045737800, ACOSTA MORELO ANDREA DEL CARMEN, Aprendiz, FOCA
-1002242858, ALVAREZ BARRIOS YINARIS, Auxiliar de Enfermería, FOCA
-1123456789, PEREZ RUIZ JUAN, Médico General, VIU"
+1002242858, ALVAREZ BARRIOS YINARIS, Auxiliar de Enfermería, FOCA"
+                oninput="actualizarCountAsistentes()"
                 style="width:100%; padding:12px; font-family:var(--mono); font-size:13px;
                        background:var(--surface); color:var(--ink); border:1px solid var(--line);
                        border-radius:6px; resize:vertical;" required></textarea>
@@ -1026,47 +1050,65 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Configuración</h1>
-          <p class="page-lead">Ajustes generales del sistema.</p>
+          <p class="page-lead">Ajustes generales del sistema. Los cambios se guardan en la base de datos.</p>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><h3 class="card-title">Portal público</h3></div>
-        <div class="card-body">
-          <div class="field">
-            <label>URL del portal</label>
-            <input type="text" value="https://certificados-foca.web.app" />
-          </div>
-          <div class="field">
-            <label>URL del QR (base)</label>
-            <input type="text" value="https://certificados-foca.web.app/?cc=" />
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3 class="card-title">Firmantes por defecto</h3></div>
-        <div class="card-body">
-          <div class="field-row">
+
+      <form onsubmit="guardarConfig(event)">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Portal público</h3></div>
+          <div class="card-body">
             <div class="field">
-              <label>Firmante 1 – Nombre</label>
-              <input type="text" value="Dr. Luis José Escaf Jaraba" />
+              <label>URL del portal</label>
+              <input type="url" id="cfgPortalUrl" placeholder="https://..." />
+              <p style="font-size:11px; color:var(--ink-mute); margin:4px 0 0;">
+                La URL donde las personas verifican sus certificados. Se detecta automáticamente si la dejás vacía.
+              </p>
             </div>
             <div class="field">
-              <label>Firmante 1 – Cargo</label>
-              <input type="text" value="Dirección Médica" />
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Firmante 2 – Nombre</label>
-              <input type="text" value="Ing. María Rodríguez" />
-            </div>
-            <div class="field">
-              <label>Firmante 2 – Cargo</label>
-              <input type="text" value="Coordinación SST" />
+              <label>URL del QR (base)</label>
+              <input type="url" id="cfgQrBase" placeholder="https://..." />
+              <p style="font-size:11px; color:var(--ink-mute); margin:4px 0 0;">
+                A esta URL se le agrega <code>?cc=cedula</code> al generar cada QR. Los scripts de Python (<code>generar-lote.py</code>) usan este valor.
+              </p>
             </div>
           </div>
         </div>
-      </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Firmantes por defecto</h3></div>
+          <div class="card-body">
+            <p style="font-size:12px; color:var(--ink-mute); margin:0 0 16px;">
+              Se usan al generar los PDFs de los certificados. Podés dejarlos vacíos si tu plantilla ya trae las firmas embebidas (como la actual de FOCA).
+            </p>
+            <div class="field-row">
+              <div class="field">
+                <label>Firmante 1 – Nombre</label>
+                <input type="text" id="cfgFirmante1Nombre" placeholder="Dra. Mónica Sierra" />
+              </div>
+              <div class="field">
+                <label>Firmante 1 – Cargo</label>
+                <input type="text" id="cfgFirmante1Cargo" placeholder="Directora Médica" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Firmante 2 – Nombre</label>
+                <input type="text" id="cfgFirmante2Nombre" placeholder="(opcional)" />
+              </div>
+              <div class="field">
+                <label>Firmante 2 – Cargo</label>
+                <input type="text" id="cfgFirmante2Cargo" placeholder="(opcional)" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button type="button" class="btn" onclick="loadConfig()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar configuración</button>
+        </div>
+      </form>
     </div>
 
   </main>
@@ -1306,6 +1348,7 @@
         'page-capacitaciones': loadCapacitaciones,
         'page-emitir': loadEmitirForm,
         'page-historial': loadHistorial,
+        'page-config': loadConfig,
       };
       if (loaders[pageId]) await loaders[pageId]();
     });
@@ -1413,6 +1456,10 @@
           </div>
           <div class="course-actions">
             <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${c.vigencia_anos} años</span>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm" onclick='editarCapacitacion(${JSON.stringify(c)})'>Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="borrarCapacitacion(${c.id}, ${JSON.stringify(c.nombre)}, ${c.emitidos})">Borrar</button>
+            </div>
           </div>
         </div>
       `).join('');
@@ -1432,6 +1479,8 @@
     }
   }
 
+  let editandoCapId = null;
+
   async function crearCapacitacion(e) {
     e.preventDefault();
     const body = {
@@ -1443,11 +1492,44 @@
       descripcion: document.getElementById('capDescripcion').value.trim(),
     };
     try {
-      await api('/api/capacitaciones', {method: 'POST', body: JSON.stringify(body)});
+      if (editandoCapId) {
+        await api(`/api/capacitacion?id=${editandoCapId}`, {method: 'PATCH', body: JSON.stringify(body)});
+        toast('Capacitación actualizada ✓');
+      } else {
+        await api('/api/capacitaciones', {method: 'POST', body: JSON.stringify(body)});
+        toast('Capacitación creada ✓');
+      }
       closeModal('modalCourse');
       document.querySelector('#modalCourse form').reset();
+      editandoCapId = null;
+      document.querySelector('#modalCourse .modal-title').textContent = 'Nueva capacitación';
       await loadCapacitaciones();
-      toast('Capacitación creada ✓');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  function editarCapacitacion(c) {
+    editandoCapId = c.id;
+    document.querySelector('#modalCourse .modal-title').textContent = 'Editar capacitación';
+    document.getElementById('capNombre').value = c.nombre || '';
+    document.getElementById('capHoras').value = c.horas || '';
+    document.getElementById('capVigencia').value = c.vigencia_anos || 2;
+    document.getElementById('capEmpresa').value = c.empresa || 'AMBAS';
+    document.getElementById('capCategoria').value = c.categoria || 'SST';
+    document.getElementById('capDescripcion').value = c.descripcion || '';
+    openModal('modalCourse');
+  }
+
+  async function borrarCapacitacion(id, nombre, emitidos) {
+    const msg = emitidos > 0
+      ? `"${nombre}" tiene ${emitidos} certificado(s) emitido(s). Se desactivará (no se borra para preservar historial). ¿Continuar?`
+      : `¿Borrar "${nombre}"? Esta capacitación no tiene certificados emitidos.`;
+    if (!confirm(msg)) return;
+    try {
+      const r = await api(`/api/capacitacion?id=${id}`, {method: 'DELETE'});
+      toast(r.action === 'eliminada' ? 'Capacitación eliminada' : 'Capacitación desactivada');
+      await loadCapacitaciones();
     } catch (err) {
       toast(err.message, 'err');
     }
@@ -1468,6 +1550,82 @@
       }
     } catch (e) {
       toast('Error: ' + e.message, 'err');
+    }
+  }
+
+  function actualizarCountAsistentes() {
+    const ta = document.getElementById('emitAsistentes');
+    const n = ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean).length;
+    const el = document.getElementById('emitCount');
+    if (el) el.textContent = n > 0 ? `(${n})` : '';
+  }
+
+  function normalizarClave(s) {
+    return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  }
+
+  function detectarColumnas(headers) {
+    // Mapea nombres de columnas del Excel a nuestros campos internos
+    const alias = {
+      cedula:  ['cedula', 'documento', 'numerodocumento', 'nrodocumento', 'noidentificacion', 'identificacion', 'cc', 'dni'],
+      nombre:  ['nombre', 'nombres', 'nombrecompleto', 'apellidosnombres', 'apellidosynombres', 'nombreyapellido'],
+      cargo:   ['cargo', 'puesto', 'rol', 'ocupacion', 'profesion'],
+      empresa: ['empresa', 'compania', 'compania', 'razonsocial', 'entidad'],
+    };
+    const map = {};
+    headers.forEach((h, i) => {
+      const k = normalizarClave(h);
+      for (const [campo, aliases] of Object.entries(alias)) {
+        if (aliases.includes(k) && !(campo in map)) map[campo] = i;
+      }
+    });
+    return map;
+  }
+
+  async function cargarExcelAsistentes(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (typeof XLSX === 'undefined') {
+      return toast('Librería Excel no cargó, revisá tu conexión', 'err');
+    }
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      if (rows.length < 2) return toast('El Excel está vacío o solo tiene encabezados', 'err');
+
+      const headers = rows[0].map(h => String(h || '').trim());
+      const map = detectarColumnas(headers);
+
+      if (!('cedula' in map) || !('nombre' in map)) {
+        return toast('No encontré columnas de "Cédula" y "Nombre". Revisá los encabezados.', 'err');
+      }
+
+      const lineas = [];
+      let omitidos = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        const cedula = String(r[map.cedula] ?? '').replace(/\D/g, '');
+        const nombre = String(r[map.nombre] ?? '').trim();
+        const cargo  = map.cargo !== undefined ? String(r[map.cargo] ?? '').trim() : '';
+        let empresa  = map.empresa !== undefined ? String(r[map.empresa] ?? '').trim().toUpperCase() : 'FOCA';
+        if (!['FOCA', 'VIU'].includes(empresa)) empresa = 'FOCA';
+        if (!cedula || !nombre) { omitidos++; continue; }
+        lineas.push(`${cedula}, ${nombre}, ${cargo}, ${empresa}`);
+      }
+
+      document.getElementById('emitAsistentes').value = lineas.join('\n');
+      actualizarCountAsistentes();
+
+      toast(`${lineas.length} asistentes cargados del Excel${omitidos > 0 ? ` (${omitidos} filas omitidas)` : ''} ✓`);
+      // Limpiar file input para permitir re-subir el mismo archivo
+      e.target.value = '';
+    } catch (err) {
+      toast('Error leyendo Excel: ' + err.message, 'err');
     }
   }
 
@@ -1565,6 +1723,39 @@
       `).join('');
     } catch (e) {
       toast('Error cargando historial: ' + e.message, 'err');
+    }
+  }
+
+  // ==================== CONFIGURACIÓN ====================
+  async function loadConfig() {
+    try {
+      const cfg = await api('/api/config');
+      document.getElementById('cfgPortalUrl').value = cfg.portal_url || '';
+      document.getElementById('cfgQrBase').value = cfg.qr_base_url || '';
+      document.getElementById('cfgFirmante1Nombre').value = cfg.firmante_1_nombre || '';
+      document.getElementById('cfgFirmante1Cargo').value = cfg.firmante_1_cargo || '';
+      document.getElementById('cfgFirmante2Nombre').value = cfg.firmante_2_nombre || '';
+      document.getElementById('cfgFirmante2Cargo').value = cfg.firmante_2_cargo || '';
+    } catch (e) {
+      toast('Error cargando config: ' + e.message, 'err');
+    }
+  }
+
+  async function guardarConfig(e) {
+    e.preventDefault();
+    const body = {
+      portal_url: document.getElementById('cfgPortalUrl').value.trim(),
+      qr_base_url: document.getElementById('cfgQrBase').value.trim(),
+      firmante_1_nombre: document.getElementById('cfgFirmante1Nombre').value.trim(),
+      firmante_1_cargo:  document.getElementById('cfgFirmante1Cargo').value.trim(),
+      firmante_2_nombre: document.getElementById('cfgFirmante2Nombre').value.trim(),
+      firmante_2_cargo:  document.getElementById('cfgFirmante2Cargo').value.trim(),
+    };
+    try {
+      await api('/api/config', {method: 'PATCH', body: JSON.stringify(body)});
+      toast('Configuración guardada ✓');
+    } catch (err) {
+      toast(err.message, 'err');
     }
   }
 
