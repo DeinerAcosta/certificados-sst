@@ -1286,35 +1286,6 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Firmantes por defecto</h3></div>
-          <div class="card-body">
-            <p style="font-size:12px; color:var(--ink-mute); margin:0 0 16px;">
-              Se usan al generar los PDFs de los certificados. Pueden dejarse vacíos si la plantilla ya trae las firmas embebidas.
-            </p>
-            <div class="field-row">
-              <div class="field">
-                <label>Firmante 1 – Nombre</label>
-                <input type="text" id="cfgFirmante1Nombre" placeholder="Dra. Mónica Sierra" />
-              </div>
-              <div class="field">
-                <label>Firmante 1 – Cargo</label>
-                <input type="text" id="cfgFirmante1Cargo" placeholder="Directora Médica" />
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label>Firmante 2 – Nombre</label>
-                <input type="text" id="cfgFirmante2Nombre" placeholder="(opcional)" />
-              </div>
-              <div class="field">
-                <label>Firmante 2 – Cargo</label>
-                <input type="text" id="cfgFirmante2Cargo" placeholder="(opcional)" />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
           <button type="button" class="btn" onclick="loadConfig()">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar configuración</button>
@@ -2134,10 +2105,6 @@
       const cfg = await api('/api/config');
       document.getElementById('cfgPortalUrl').value = cfg.portal_url || '';
       document.getElementById('cfgQrBase').value = cfg.qr_base_url || '';
-      document.getElementById('cfgFirmante1Nombre').value = cfg.firmante_1_nombre || '';
-      document.getElementById('cfgFirmante1Cargo').value = cfg.firmante_1_cargo || '';
-      document.getElementById('cfgFirmante2Nombre').value = cfg.firmante_2_nombre || '';
-      document.getElementById('cfgFirmante2Cargo').value = cfg.firmante_2_cargo || '';
     } catch (e) {
       toast('Error cargando config: ' + e.message, 'err');
     }
@@ -2148,10 +2115,6 @@
     const body = {
       portal_url: document.getElementById('cfgPortalUrl').value.trim(),
       qr_base_url: document.getElementById('cfgQrBase').value.trim(),
-      firmante_1_nombre: document.getElementById('cfgFirmante1Nombre').value.trim(),
-      firmante_1_cargo:  document.getElementById('cfgFirmante1Cargo').value.trim(),
-      firmante_2_nombre: document.getElementById('cfgFirmante2Nombre').value.trim(),
-      firmante_2_cargo:  document.getElementById('cfgFirmante2Cargo').value.trim(),
     };
     try {
       await api('/api/config', {method: 'PATCH', body: JSON.stringify(body)});
