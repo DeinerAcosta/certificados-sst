@@ -467,13 +467,14 @@
   footer .seal {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 10px;
-    border: 1px solid var(--gold-soft);
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid color-mix(in srgb, var(--verified) 25%, transparent);
+    background: var(--verified-bg);
     border-radius: 999px;
-    color: var(--gold);
+    color: var(--verified);
     font-weight: 600;
-    letter-spacing: .5px;
+    letter-spacing: .3px;
     font-size: 11px;
     text-transform: uppercase;
   }
@@ -514,8 +515,8 @@
     <div class="eyebrow">Portal de Verificación</div>
     <h1>Consulta tus <em>certificados</em></h1>
     <p class="lead">
-      Ingresá tu número de documento para ver los certificados
-      de capacitación registrados a tu nombre.
+      Ingrese su número de documento para consultar los certificados
+      de capacitación registrados a su nombre.
     </p>
 
     <form class="search" onsubmit="buscar(event)">
@@ -525,17 +526,16 @@
         type="text"
         inputmode="numeric"
         pattern="[0-9]*"
-        placeholder="Ej: 1045737800"
+        placeholder="Número de documento"
         autocomplete="off"
         maxlength="12"
       />
-      <div class="hint">Probá con: <strong>1045737800</strong>, <strong>1010020009</strong> o <strong>22506980</strong></div>
       <button type="submit" class="primary">Verificar certificados</button>
     </form>
 
     <div class="error-box" id="error">
       <strong>Documento no encontrado</strong>
-      No se encontraron certificados asociados a este número. Verificá el documento e intentá de nuevo.
+      No se encontraron certificados asociados a este número. Verifique el documento e intente nuevamente.
     </div>
 
     <div class="footer-note">
@@ -592,10 +592,10 @@
 
 <footer>
   <div class="seal">
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-    Documento oficial · FOCA
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    Sistema oficial · Grupo FOCA / VIU
   </div>
-  <div style="margin-top:8px;">© 2026 · Grupo FOCA / VIU — Sistema de Verificación de Certificados SST</div>
+  <div style="margin-top:8px;">© 2026 · Sistema de Verificación de Certificados SST</div>
 </footer>
 
 <script>
