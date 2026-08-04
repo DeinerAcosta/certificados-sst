@@ -686,6 +686,59 @@
     margin-top: 2px;
   }
 
+  /* --- ASISTENTES PREVIEW / EMIT ---------------------- */
+  .asistentes-preview {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--success-bg);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+    border-radius: var(--radius);
+  }
+  .asistentes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--success);
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  #manualEditor { margin-top: 14px; }
+  #manualEditor textarea {
+    width: 100%;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    resize: vertical;
+    outline: none;
+  }
+  #manualEditor textarea:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent);
+  }
+  .input-hint {
+    font-size: 11.5px;
+    color: var(--ink-mute);
+    margin: 6px 0 0;
+    font-style: normal;
+  }
+  .emit-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  .btn-lg {
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+
   /* --- TABS INSIDE MODAL --- */
   .tabs {
     display: flex;
@@ -932,28 +985,29 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Emitir Certificados</h1>
-          <p class="page-lead">Cargá la lista de asistentes de una capacitación. Se crean las personas + certificados en la DB.</p>
+          <p class="page-lead">Emisión masiva de certificados a partir de una lista de asistentes.</p>
         </div>
       </div>
       <form onsubmit="emitirCertificados(event)">
+
+        <!-- PASO 1: Datos de la emisión -->
         <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">1. Datos de la emisión</h3>
+          </div>
           <div class="card-body">
             <div class="field-row">
               <div class="field">
                 <label>Capacitación</label>
                 <select id="emitCap" required>
-                  <option value="">-- Seleccioná --</option>
+                  <option value="">Seleccione una capacitación</option>
                 </select>
               </div>
               <div class="field">
-                <label>Ciudad de la capacitación</label>
+                <label>Ciudad</label>
                 <input type="text" id="emitCiudad" list="ciudadesList" required
-                       placeholder="Ej: BARRANQUILLA"
                        style="text-transform:uppercase;" />
                 <datalist id="ciudadesList"></datalist>
-                <p style="font-size:11px; color:var(--ink-mute); margin:4px 0 0;">
-                  Escribí cualquier ciudad. Aparecen sugerencias con las ciudades ya usadas.
-                </p>
               </div>
             </div>
             <div class="field-row">
@@ -966,52 +1020,60 @@
                 <input type="date" id="emitVence" />
               </div>
             </div>
-
-            <div class="field">
-              <label>Cargar asistentes desde Excel</label>
-              <div class="tpl-uploader" onclick="document.getElementById('excelFile').click()">
-                <div class="tpl-icon">
-                  <svg width="42" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <path d="M9 15h6M9 18h6M9 12h3"/>
-                  </svg>
-                </div>
-                <div class="tpl-text">
-                  <div class="tpl-title">Subí el Excel de asistentes</div>
-                  <div class="tpl-sub">o hacé click para seleccionar del computador</div>
-                  <div class="tpl-formats">Formatos aceptados: <strong>.xlsx</strong> · <strong>.xls</strong> · <strong>.csv</strong></div>
-                </div>
-              </div>
-              <input type="file" id="excelFile" accept=".xlsx,.xls,.csv"
-                     style="display:none;" onchange="cargarExcelAsistentes(event)" />
-              <p style="font-size:11px; color:var(--ink-mute); margin:8px 0 0;">
-                <strong>Columnas esperadas:</strong> Cédula, Nombre, Cargo, Empresa
-                &nbsp;·&nbsp; Se detectan automáticamente sinónimos como "Numero documento", "Apellidos / Nombres", etc.
-              </p>
-            </div>
-
-            <div class="field">
-              <label>Asistentes cargados <span id="emitCount" style="color:var(--brand); font-weight:600;"></span></label>
-              <p style="font-size:12px; color:var(--ink-mute); margin:0 0 8px;">
-                Podés editar aquí antes de emitir. Una línea por persona: <code>cédula, nombre, cargo, empresa</code>
-              </p>
-              <textarea id="emitAsistentes" rows="8"
-                placeholder="1045737800, ACOSTA MORELO ANDREA DEL CARMEN, Aprendiz, FOCA
-1002242858, ALVAREZ BARRIOS YINARIS, Auxiliar de Enfermería, FOCA"
-                oninput="actualizarCountAsistentes()"
-                style="width:100%; padding:12px; font-family:var(--mono); font-size:13px;
-                       background:var(--surface); color:var(--ink); border:1px solid var(--line);
-                       border-radius:6px; resize:vertical;" required></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary" id="emitBtn" style="width:100%; padding:12px; margin-top:8px;">
-              Emitir certificados
-            </button>
-
-            <div id="emitResult" style="display:none; margin-top:16px;"></div>
           </div>
         </div>
+
+        <!-- PASO 2: Lista de asistentes -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">2. Lista de asistentes</h3>
+            <span id="emitCount" class="pill pill-active" style="display:none;">0 cargados</span>
+          </div>
+          <div class="card-body">
+            <div class="tpl-uploader" onclick="document.getElementById('excelFile').click()">
+              <div class="tpl-icon">
+                <svg width="40" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M9 15h6M9 18h6M9 12h3"/>
+                </svg>
+              </div>
+              <div class="tpl-text">
+                <div class="tpl-title">Cargar lista desde Excel</div>
+                <div class="tpl-sub">Click para seleccionar el archivo</div>
+                <div class="tpl-formats">Formatos: <strong>.xlsx</strong> · <strong>.xls</strong> · <strong>.csv</strong></div>
+              </div>
+            </div>
+            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv"
+                   style="display:none;" onchange="cargarExcelAsistentes(event)" />
+
+            <div class="asistentes-preview" id="asistentesPreview" style="display:none;">
+              <div class="asistentes-header">
+                <span id="asistentesSummary"></span>
+                <button type="button" class="btn btn-sm" onclick="toggleManualEdit()">
+                  <span id="toggleEditText">Editar manualmente</span>
+                </button>
+              </div>
+              <div id="manualEditor" style="display:none;">
+                <textarea id="emitAsistentes" rows="10"
+                  oninput="actualizarCountAsistentes()"
+                  spellcheck="false"></textarea>
+                <p class="input-hint">
+                  Formato por línea: cédula, nombre, cargo, empresa (FOCA o VIU)
+                </p>
+              </div>
+              <textarea id="emitAsistentesHidden" style="display:none;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="emit-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="emitBtn">
+            Emitir certificados
+          </button>
+        </div>
+
+        <div id="emitResult" style="display:none; margin-top:16px;"></div>
       </form>
     </div>
 
@@ -1079,7 +1141,7 @@
           <div class="card-header"><h3 class="card-title">Firmantes por defecto</h3></div>
           <div class="card-body">
             <p style="font-size:12px; color:var(--ink-mute); margin:0 0 16px;">
-              Se usan al generar los PDFs de los certificados. Podés dejarlos vacíos si tu plantilla ya trae las firmas embebidas (como la actual de FOCA).
+              Se usan al generar los PDFs de los certificados. Pueden dejarse vacíos si la plantilla ya trae las firmas embebidas.
             </p>
             <div class="field-row">
               <div class="field">
@@ -1169,7 +1231,7 @@
     <div class="modal-body">
       <div class="field">
         <label>Nombre de la capacitación</label>
-        <input type="text" id="capNombre" placeholder="Ej: Manejo Seguro de Residuos Hospitalarios" required />
+        <input type="text" id="capNombre" placeholder="Nombre de la capacitación" required />
       </div>
       <div class="field-row">
         <div class="field">
@@ -1668,6 +1730,10 @@
       if (!document.getElementById('emitFecha').value) {
         document.getElementById('emitFecha').value = new Date().toISOString().slice(0, 10);
       }
+
+      // Resetear preview de asistentes al entrar
+      const ta = document.getElementById('emitAsistentes');
+      if (ta && !ta.value) actualizarCountAsistentes();
     } catch (e) {
       toast('Error: ' + e.message, 'err');
     }
@@ -1675,9 +1741,39 @@
 
   function actualizarCountAsistentes() {
     const ta = document.getElementById('emitAsistentes');
+    if (!ta) return;
     const n = ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean).length;
-    const el = document.getElementById('emitCount');
-    if (el) el.textContent = n > 0 ? `(${n})` : '';
+    // Sincronizar hidden field (para validación required)
+    const hidden = document.getElementById('emitAsistentesHidden');
+    if (hidden) hidden.value = ta.value;
+    // Actualizar badge
+    const badge = document.getElementById('emitCount');
+    if (badge) {
+      if (n > 0) {
+        badge.textContent = `${n} ${n === 1 ? 'cargado' : 'cargados'}`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    // Actualizar resumen
+    const summary = document.getElementById('asistentesSummary');
+    if (summary) {
+      summary.textContent = n > 0
+        ? `✓ ${n} ${n === 1 ? 'persona lista para certificar' : 'personas listas para certificar'}`
+        : 'Sin asistentes cargados';
+    }
+    // Mostrar preview solo si hay contenido
+    const preview = document.getElementById('asistentesPreview');
+    if (preview) preview.style.display = n > 0 ? 'block' : 'none';
+  }
+
+  function toggleManualEdit() {
+    const ed = document.getElementById('manualEditor');
+    const btn = document.getElementById('toggleEditText');
+    const abierto = ed.style.display === 'block';
+    ed.style.display = abierto ? 'none' : 'block';
+    btn.textContent = abierto ? 'Editar manualmente' : 'Ocultar editor';
   }
 
   function normalizarClave(s) {
@@ -1757,9 +1853,10 @@
     const vence = document.getElementById('emitVence').value || null;
     const raw = document.getElementById('emitAsistentes').value.trim();
 
-    if (!cap) return toast('Seleccioná una capacitación', 'err');
-    if (!fecha) return toast('Ingresá la fecha', 'err');
-    if (!raw) return toast('Cargá al menos una persona', 'err');
+    if (!cap) return toast('Seleccione una capacitación', 'err');
+    if (!ciudad) return toast('Ingrese la ciudad', 'err');
+    if (!fecha) return toast('Seleccione la fecha de realización', 'err');
+    if (!raw) return toast('Cargue la lista de asistentes', 'err');
 
     // Parsear el textarea: cada línea es "cedula, nombre, cargo, empresa"
     const asistentes = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
