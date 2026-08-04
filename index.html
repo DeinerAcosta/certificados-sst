@@ -1,5 +1,8 @@
 <title>Certificados FOCA · Portal de Verificación</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&display=swap" />
 
 <style>
   :root {
@@ -18,8 +21,8 @@
     --error:      #B4413C;
     --error-bg:   #FBEDEC;
     --radius:     6px;
-    --serif:      Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
-    --sans:       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --serif:      'Instrument Serif', Georgia, 'Iowan Old Style', serif;
+    --sans:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --mono:       'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
   }
 
@@ -61,10 +64,11 @@
     background: var(--paper);
     color: var(--ink);
     font-family: var(--sans);
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -175,14 +179,15 @@
   }
   h1 {
     font-family: var(--serif);
-    font-size: 40px;
-    line-height: 1.1;
+    font-size: 52px;
+    line-height: 1.05;
     color: var(--ink);
-    margin: 0 0 14px;
+    margin: 0 0 16px;
     font-weight: 400;
+    letter-spacing: -1px;
     text-wrap: balance;
   }
-  h1 em { color: var(--brand); font-style: italic; font-weight: 500; }
+  h1 em { color: var(--brand); font-style: italic; font-weight: 400; }
   .lead {
     color: var(--ink-soft);
     max-width: 380px;
