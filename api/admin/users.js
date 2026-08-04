@@ -1,11 +1,11 @@
-// GET    /api/usuarios         → lista todos los usuarios admin
-// POST   /api/usuarios         → crea nuevo usuario admin
-//   body: { email, nombre, password, rol }
-// DELETE /api/usuarios?id=N    → desactiva usuario (soft delete)
+// GET    /api/admin/users         → list all admin users
+// POST   /api/admin/users         → create new admin user
+//   body: { email, name, password, role }
+// DELETE /api/admin/users?id=N    → deactivate user (soft delete)
 
 import crypto from 'crypto';
-import { sql, json, error } from './_db.js';
-import { requireAuth } from './_auth.js';
+import { sql, json, error } from '../_db.js';
+import { requireAuth } from '../_auth.js';
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -20,52 +20,52 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const rows = await sql`
-        SELECT id, email, nombre, rol, activo, last_login_at, created_at
-        FROM usuarios
-        WHERE activo = TRUE
+        SELECT id, email, name, role, active, last_login_at, created_at
+        FROM users
+        WHERE active = TRUE
         ORDER BY created_at DESC
       `;
-      return json(res, { usuarios: rows });
+      return json(res, { users: rows });
     }
 
     if (req.method === 'POST') {
       const body = await readBody(req);
       const email = String(body.email || '').trim().toLowerCase();
-      const nombre = String(body.nombre || '').trim();
+      const name = String(body.name || '').trim();
       const password = String(body.password || '');
-      const rol = body.rol === 'editor' ? 'editor' : 'admin';
+      const role = body.role === 'editor' ? 'editor' : 'admin';
 
-      if (!email || !nombre || !password) {
-        return error(res, 'Faltan campos: email, nombre, password', 400);
+      if (!email || !name || !password) {
+        return error(res, 'Missing fields: email, name, password', 400);
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return error(res, 'Email inválido', 400);
+        return error(res, 'Invalid email address', 400);
       }
       if (password.length < 6) {
-        return error(res, 'La contraseña debe tener al menos 6 caracteres', 400);
+        return error(res, 'Password must be at least 6 characters long', 400);
       }
 
-      const existing = await sql`SELECT id FROM usuarios WHERE email = ${email}`;
+      const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
       if (existing.length > 0) {
-        return error(res, 'Ya existe un usuario con ese email', 409);
+        return error(res, 'A user with that email already exists', 409);
       }
 
       const password_hash = hashPassword(password);
-      const [nuevo] = await sql`
-        INSERT INTO usuarios (email, nombre, password_hash, rol)
-        VALUES (${email}, ${nombre}, ${password_hash}, ${rol})
-        RETURNING id, email, nombre, rol, created_at
+      const [newUser] = await sql`
+        INSERT INTO users (email, name, password_hash, role)
+        VALUES (${email}, ${name}, ${password_hash}, ${role})
+        RETURNING id, email, name, role, created_at
       `;
-      return json(res, { ok: true, usuario: nuevo }, 201);
+      return json(res, { ok: true, user: newUser }, 201);
     }
 
     if (req.method === 'DELETE') {
       const id = parseInt(req.query.id, 10);
-      if (!id) return error(res, 'Falta ?id=', 400);
+      if (!id) return error(res, 'Missing ?id=', 400);
       if (id === currentUser.id) {
-        return error(res, 'No podés desactivar tu propio usuario', 400);
+        return error(res, 'You cannot deactivate your own user', 400);
       }
-      await sql`UPDATE usuarios SET activo = FALSE WHERE id = ${id}`;
+      await sql`UPDATE users SET active = FALSE WHERE id = ${id}`;
       return json(res, { ok: true });
     }
 

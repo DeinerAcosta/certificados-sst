@@ -1,6 +1,6 @@
-// POST /api/logout  → limpia la cookie de sesión.
+// POST /api/auth/logout — clears the session cookie.
 
-import { clearAuthCookie } from './_auth.js';
+import { clearAuthCookie } from '../_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {

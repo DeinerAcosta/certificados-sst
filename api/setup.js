@@ -1,11 +1,9 @@
-// GET /api/setup — crea las tablas + inserta datos de prueba
-// Corré esto UNA sola vez al configurar Neon.
-// Después podés borrar este archivo o dejarlo (es idempotente).
+// GET /api/setup — Idempotent DB migration + seed
+// Creates tables in English, migrates from Spanish if legacy schema exists.
 
 import { sql, json, error } from './_db.js';
 import crypto from 'crypto';
 
-// Utilidad: hash de password (scrypt built-in en Node)
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -18,142 +16,203 @@ export default async function handler(req, res) {
   }
 
   try {
-    // === TABLAS ===
+    // === LEGACY MIGRATION (Spanish → English) ===
+    // Rename old tables if they exist
+    await sql`ALTER TABLE IF EXISTS personas       RENAME TO attendees`;
+    await sql`ALTER TABLE IF EXISTS capacitaciones RENAME TO trainings`;
+    await sql`ALTER TABLE IF EXISTS certificados   RENAME TO certificates`;
+    await sql`ALTER TABLE IF EXISTS usuarios       RENAME TO users`;
+    await sql`ALTER TABLE IF EXISTS config_kv      RENAME TO settings`;
 
-    // Usuarios administradores del panel
+    // Rename columns (each wrapped in try since RENAME COLUMN has no IF EXISTS in PG)
+    const renameCol = async (table, oldCol, newCol) => {
+      try { await sql.query(`ALTER TABLE ${table} RENAME COLUMN ${oldCol} TO ${newCol}`); }
+      catch { /* already renamed or doesn't exist */ }
+    };
+
+    // attendees
+    await renameCol('attendees', 'cedula',   'document_id');
+    await renameCol('attendees', 'tipo_doc', 'document_type');
+    await renameCol('attendees', 'nombre',   'name');
+    await renameCol('attendees', 'cargo',    'role');
+    await renameCol('attendees', 'empresa',  'company');
+    await renameCol('attendees', 'activo',   'active');
+
+    // trainings
+    await renameCol('trainings', 'nombre',                 'name');
+    await renameCol('trainings', 'descripcion',            'description');
+    await renameCol('trainings', 'horas',                  'hours');
+    await renameCol('trainings', 'vigencia_anos',          'validity_years');
+    await renameCol('trainings', 'empresa',                'company');
+    await renameCol('trainings', 'categoria',              'category');
+    await renameCol('trainings', 'activa',                 'active');
+    await renameCol('trainings', 'plantilla_foca_nombre',  'template_foca_name');
+    await renameCol('trainings', 'plantilla_foca_data',    'template_foca_data');
+    await renameCol('trainings', 'plantilla_viu_nombre',   'template_viu_name');
+    await renameCol('trainings', 'plantilla_viu_data',     'template_viu_data');
+    // Drop obsolete column
+    await sql`ALTER TABLE IF EXISTS trainings DROP COLUMN IF EXISTS plantilla_url`;
+
+    // certificates
+    await renameCol('certificates', 'cedula',          'document_id');
+    await renameCol('certificates', 'capacitacion_id', 'training_id');
+    await renameCol('certificates', 'ciudad',          'city');
+    await renameCol('certificates', 'fecha',           'issue_date');
+    await renameCol('certificates', 'valido_hasta',    'expires_at');
+    await renameCol('certificates', 'emitido_por',     'issued_by');
+    await renameCol('certificates', 'pdf_url',         'pdf_url');
+
+    // users
+    await renameCol('users', 'nombre',        'name');
+    await renameCol('users', 'rol',           'role');
+    await renameCol('users', 'activo',        'active');
+    await renameCol('users', 'password_hash', 'password_hash');
+    await renameCol('users', 'last_login_at', 'last_login_at');
+
+    // settings
+    await renameCol('settings', 'clave', 'key');
+    await renameCol('settings', 'valor', 'value');
+
+    // === FRESH TABLES (in English) — created only if migration didn't already create them ===
     await sql`
-      CREATE TABLE IF NOT EXISTS usuarios (
+      CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
-        nombre TEXT NOT NULL,
+        name TEXT NOT NULL,
         password_hash TEXT NOT NULL,
-        rol TEXT DEFAULT 'admin' CHECK (rol IN ('admin', 'editor')),
-        activo BOOLEAN DEFAULT TRUE,
+        role TEXT DEFAULT 'admin' CHECK (role IN ('admin', 'editor')),
+        active BOOLEAN DEFAULT TRUE,
         last_login_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
-    // Personas que asistieron a alguna capacitación (destinatarios de certificados)
     await sql`
-      CREATE TABLE IF NOT EXISTS personas (
-        cedula TEXT PRIMARY KEY,
-        tipo_doc TEXT DEFAULT 'C.C',
-        nombre TEXT NOT NULL,
-        cargo TEXT,
-        empresa TEXT NOT NULL CHECK (empresa IN ('FOCA','VIU')),
-        activo BOOLEAN DEFAULT TRUE,
+      CREATE TABLE IF NOT EXISTS attendees (
+        document_id TEXT PRIMARY KEY,
+        document_type TEXT DEFAULT 'C.C',
+        name TEXT NOT NULL,
+        role TEXT,
+        company TEXT NOT NULL CHECK (company IN ('FOCA','VIU')),
+        active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS capacitaciones (
+      CREATE TABLE IF NOT EXISTS trainings (
         id SERIAL PRIMARY KEY,
-        nombre TEXT NOT NULL,
-        descripcion TEXT,
-        horas TEXT NOT NULL,
-        vigencia_anos INT DEFAULT 2,
-        empresa TEXT DEFAULT 'AMBAS',
-        categoria TEXT DEFAULT 'SST',
-        plantilla_url TEXT,
-        activa BOOLEAN DEFAULT TRUE,
+        name TEXT NOT NULL,
+        description TEXT,
+        hours TEXT NOT NULL,
+        validity_years INT DEFAULT 2,
+        company TEXT DEFAULT 'AMBAS',
+        category TEXT DEFAULT 'SST',
+        template_foca_name TEXT,
+        template_foca_data TEXT,
+        template_viu_name TEXT,
+        template_viu_data TEXT,
+        active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
-    // Columnas nuevas para plantillas por empresa (migration idempotente)
-    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_foca_nombre TEXT`;
-    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_foca_data  TEXT`;
-    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_viu_nombre  TEXT`;
-    await sql`ALTER TABLE capacitaciones ADD COLUMN IF NOT EXISTS plantilla_viu_data   TEXT`;
-
     await sql`
-      CREATE TABLE IF NOT EXISTS certificados (
+      CREATE TABLE IF NOT EXISTS certificates (
         id SERIAL PRIMARY KEY,
-        cedula TEXT NOT NULL REFERENCES personas(cedula) ON DELETE CASCADE,
-        capacitacion_id INT NOT NULL REFERENCES capacitaciones(id) ON DELETE CASCADE,
-        ciudad TEXT,
-        fecha DATE NOT NULL,
-        valido_hasta DATE,
+        document_id TEXT NOT NULL REFERENCES attendees(document_id) ON DELETE CASCADE,
+        training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+        city TEXT,
+        issue_date DATE NOT NULL,
+        expires_at DATE,
         pdf_url TEXT,
-        emitido_por TEXT,
+        issued_by TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
-    await sql`CREATE INDEX IF NOT EXISTS idx_cert_cedula ON certificados(cedula)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_cert_capacitacion ON certificados(capacitacion_id)`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
 
-    // === SEED: usuario admin inicial (de ADMIN_PASSWORD env var) ===
+    await sql`CREATE INDEX IF NOT EXISTS idx_certificates_document ON certificates(document_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_certificates_training ON certificates(training_id)`;
+
+    // === SEED: initial admin user ===
     const adminPass = process.env.ADMIN_PASSWORD;
     if (adminPass) {
-      const existing = await sql`SELECT id FROM usuarios WHERE email = 'admin@foca.co'`;
+      const existing = await sql`SELECT id FROM users WHERE email = 'admin@foca.co'`;
       if (existing.length === 0) {
         const hash = hashPassword(adminPass);
         await sql`
-          INSERT INTO usuarios (email, nombre, password_hash, rol)
-          VALUES ('admin@foca.co', 'Administrador SST', ${hash}, 'admin')
+          INSERT INTO users (email, name, password_hash, role)
+          VALUES ('admin@foca.co', 'System Administrator', ${hash}, 'admin')
         `;
       }
     }
 
-    // === SEED: capacitación inicial (solo si no existe) ===
-    let capId;
-    const capExistente = await sql`
-      SELECT id FROM capacitaciones WHERE nombre = 'Violencia Sexual' LIMIT 1
+    // === SEED: initial training + attendees (idempotent) ===
+    let trainingId;
+    const existingTraining = await sql`
+      SELECT id FROM trainings WHERE name = 'Violencia Sexual' LIMIT 1
     `;
-    if (capExistente.length > 0) {
-      capId = capExistente[0].id;
+    if (existingTraining.length > 0) {
+      trainingId = existingTraining[0].id;
     } else {
-      const [nueva] = await sql`
-        INSERT INTO capacitaciones (nombre, horas, vigencia_anos, categoria, empresa)
+      const [row] = await sql`
+        INSERT INTO trainings (name, hours, validity_years, category, company)
         VALUES ('Violencia Sexual', '4 horas', 2, 'SST', 'AMBAS')
         RETURNING id
       `;
-      capId = nueva.id;
+      trainingId = row.id;
     }
 
-    // === SEED: personas de prueba (upsert por cédula) ===
     await sql`
-      INSERT INTO personas (cedula, tipo_doc, nombre, cargo, empresa) VALUES
+      INSERT INTO attendees (document_id, document_type, name, role, company) VALUES
         ('1045737800', 'C.C', 'ACOSTA MORELO ANDREA DEL CARMEN', 'Aprendiz', 'FOCA'),
         ('1002242858', 'C.C', 'ALVAREZ BARRIOS YINARIS', 'Auxiliar de Enfermería', 'FOCA')
-      ON CONFLICT (cedula) DO NOTHING
+      ON CONFLICT (document_id) DO NOTHING
     `;
 
-    // === SEED: certificados de prueba (solo si no existen ya para esta persona+cap+fecha) ===
-    if (capId) {
+    if (trainingId) {
       const seedCerts = [
         ['1045737800', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
         ['1002242858', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
       ];
-      for (const [cedula, ciudad, fecha, vence] of seedCerts) {
-        const existe = await sql`
-          SELECT id FROM certificados
-          WHERE cedula = ${cedula} AND capacitacion_id = ${capId} AND fecha = ${fecha}
+      for (const [documentId, city, date, expiresAt] of seedCerts) {
+        const existing = await sql`
+          SELECT id FROM certificates
+          WHERE document_id = ${documentId}
+            AND training_id = ${trainingId}
+            AND issue_date  = ${date}
         `;
-        if (existe.length === 0) {
+        if (existing.length === 0) {
           await sql`
-            INSERT INTO certificados (cedula, capacitacion_id, ciudad, fecha, valido_hasta, pdf_url)
-            VALUES (${cedula}, ${capId}, ${ciudad}, ${fecha}, ${vence}, ${'pdfs/' + cedula + '.pdf'})
+            INSERT INTO certificates
+              (document_id, training_id, city, issue_date, expires_at, pdf_url)
+            VALUES
+              (${documentId}, ${trainingId}, ${city}, ${date}, ${expiresAt}, ${'certificates/' + documentId + '.pdf'})
           `;
         }
       }
     }
 
-    // Contar totales para confirmar
-    const [{ usuarios }] = await sql`SELECT COUNT(*)::int AS usuarios FROM usuarios`;
-    const [{ personas }] = await sql`SELECT COUNT(*)::int AS personas FROM personas`;
-    const [{ capacitaciones }] = await sql`SELECT COUNT(*)::int AS capacitaciones FROM capacitaciones`;
-    const [{ certificados }] = await sql`SELECT COUNT(*)::int AS certificados FROM certificados`;
+    // Totals
+    const [{ users }]         = await sql`SELECT COUNT(*)::int AS users FROM users`;
+    const [{ attendees }]     = await sql`SELECT COUNT(*)::int AS attendees FROM attendees`;
+    const [{ trainings }]     = await sql`SELECT COUNT(*)::int AS trainings FROM trainings`;
+    const [{ certificates }]  = await sql`SELECT COUNT(*)::int AS certificates FROM certificates`;
 
     return json(res, {
       ok: true,
-      message: 'Base de datos inicializada correctamente',
-      totales: { usuarios, personas, capacitaciones, certificados },
+      message: 'Database initialized and migrated to English schema',
+      totals: { users, attendees, trainings, certificates },
     });
   } catch (e) {
-    return error(res, `Setup falló: ${e.message}`);
+    return error(res, `Setup failed: ${e.message}`);
   }
 }

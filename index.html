@@ -603,53 +603,66 @@
   // Intenta la API de Vercel/Neon primero. Si falla, usa datos.js local.
   // Para agregar personas: usá el panel de admin (/admin) o llamá a /api/personas.
 
-  async function fetchPersona(cedula) {
+  async function fetchAttendee(documentId) {
     try {
-      const res = await fetch(`/api/lookup?cc=${encodeURIComponent(cedula)}`, {
+      const res = await fetch(`/api/lookup?document=${encodeURIComponent(documentId)}`, {
         headers: {'Cache-Control': 'no-cache'}
       });
       if (!res.ok) throw new Error('API respondió ' + res.status);
       const data = await res.json();
-      if (!data.encontrado) return null;
-      return { ...data.persona, certificados: data.certificados };
+      if (!data.found) return null;
+      return { ...data.attendee, certificates: data.certificates };
     } catch (err) {
-      console.warn('[API no disponible, usando datos.js]', err.message);
-      const local = (window.PERSONAS || {})[cedula];
-      return local || null;
+      console.warn('[API not available, falling back to datos.js]', err.message);
+      const local = (window.PERSONAS || {})[documentId];
+      if (!local) return null;
+      // Normalize legacy datos.js shape to English
+      return {
+        name: local.nombre,
+        documentLabel: local.documento,
+        role: local.cargo,
+        company: local.empresa,
+        certificates: (local.certificados || []).map(c => ({
+          title: c.titulo,
+          issueDate: c.fecha,
+          expiresAt: c.valido_hasta,
+          hours: c.horas,
+          pdf: c.pdf,
+        })),
+      };
     }
   }
 
   async function buscar(e) {
     e.preventDefault();
-    const cedula = document.getElementById('cedula').value.trim().replace(/\D/g, '');
+    const documentId = document.getElementById('cedula').value.trim().replace(/\D/g, '');
     const errorBox = document.getElementById('error');
     errorBox.classList.remove('show');
-    if (!cedula) return;
+    if (!documentId) return;
 
-    // Feedback visual mientras carga
     const btn = e.target.querySelector('button.primary');
     const btnText = btn ? btn.textContent : null;
     if (btn) { btn.disabled = true; btn.textContent = 'Consultando...'; }
 
-    const persona = await fetchPersona(cedula);
+    const attendee = await fetchAttendee(documentId);
 
     if (btn) { btn.disabled = false; btn.textContent = btnText; }
 
-    if (!persona) {
+    if (!attendee) {
       errorBox.classList.add('show');
       return;
     }
 
-    document.getElementById('pName').textContent = persona.nombre;
-    document.getElementById('pDoc').textContent = persona.documento;
+    document.getElementById('pName').textContent = attendee.name;
+    document.getElementById('pDoc').textContent = attendee.documentLabel;
 
     const rows = document.getElementById('certRows');
-    rows.innerHTML = persona.certificados.map(c => `
+    rows.innerHTML = attendee.certificates.map(c => `
       <tr>
-        <td class="curso">${c.titulo}</td>
-        <td class="fecha">${c.fecha}</td>
-        <td class="fecha">${c.valido_hasta || '—'}</td>
-        <td class="horas">${c.horas}</td>
+        <td class="curso">${c.title}</td>
+        <td class="fecha">${c.issueDate}</td>
+        <td class="fecha">${c.expiresAt || '—'}</td>
+        <td class="horas">${c.hours}</td>
         <td class="center">
           <a href="${c.pdf}" target="_blank" class="btn-cert" download title="Descargar certificado">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -658,7 +671,7 @@
       </tr>
     `).join('');
 
-    const n = persona.certificados.length;
+    const n = attendee.certificates.length;
     document.getElementById('totalMsg').textContent =
       `Mostrando registros del 1 al ${n} de un total de ${n} registro${n === 1 ? '' : 's'}`;
 

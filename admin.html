@@ -1126,7 +1126,7 @@
           <p class="page-lead">Emisión masiva de certificados a partir de una lista de asistentes.</p>
         </div>
       </div>
-      <form onsubmit="emitirCertificados(event)">
+      <form onsubmit="issueCertificates(event)">
 
         <!-- PASO 1: Datos de la emisión -->
         <div class="card">
@@ -1183,7 +1183,7 @@
               </div>
             </div>
             <input type="file" id="excelFile" accept=".xlsx,.xls,.csv"
-                   style="display:none;" onchange="cargarExcelAsistentes(event)" />
+                   style="display:none;" onchange="loadAttendeesFromExcel(event)" />
 
             <div class="asistentes-preview" id="asistentesPreview" style="display:none;">
               <div class="asistentes-header">
@@ -1194,7 +1194,7 @@
               </div>
               <div id="manualEditor" style="display:none;">
                 <textarea id="emitAsistentes" rows="10"
-                  oninput="actualizarCountAsistentes()"
+                  oninput="updateAttendeeCount()"
                   spellcheck="false"></textarea>
                 <p class="input-hint">
                   Formato por línea: cédula, nombre, cargo, empresa (FOCA o VIU)
@@ -1227,9 +1227,9 @@
       <div class="toolbar">
         <div class="search-box">
           <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="histSearch" placeholder="Buscar por nombre, cédula o capacitación" oninput="filtrarHistorial()" />
+          <input type="text" id="histSearch" placeholder="Buscar por nombre, cédula o capacitación" oninput="filterHistory()" />
         </div>
-        <select class="filter-select" id="histCiudad" onchange="filtrarHistorial()">
+        <select class="filter-select" id="histCiudad" onchange="filterHistory()">
           <option value="">Todas las ciudades</option>
         </select>
       </div>
@@ -1265,7 +1265,7 @@
         </div>
       </div>
 
-      <form onsubmit="guardarConfig(event)">
+      <form onsubmit="saveSettings(event)">
         <div class="card">
           <div class="card-header"><h3 class="card-title">Portal público</h3></div>
           <div class="card-body">
@@ -1287,7 +1287,7 @@
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-          <button type="button" class="btn" onclick="loadConfig()">Cancelar</button>
+          <button type="button" class="btn" onclick="loadSettings()">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar configuración</button>
         </div>
       </form>
@@ -1305,7 +1305,7 @@
       <h3 class="modal-title">Nuevo usuario administrador</h3>
       <button class="modal-close" onclick="closeModal('modalUser')">×</button>
     </div>
-    <form onsubmit="crearUsuario(event)">
+    <form onsubmit="createUser(event)">
       <div class="modal-body">
         <div class="field">
           <label>Nombre completo</label>
@@ -1347,7 +1347,7 @@
       <h3 class="modal-title">Nueva capacitación</h3>
       <button class="modal-close" onclick="closeModal('modalCourse')">×</button>
     </div>
-    <form onsubmit="crearCapacitacion(event)">
+    <form onsubmit="saveTraining(event)">
     <div class="modal-body">
       <div class="field">
         <label>Nombre de la capacitación</label>
@@ -1404,7 +1404,7 @@
             <div class="tpl-formats">Formato: <strong>.docx</strong></div>
           </div>
         </div>
-        <input type="file" id="tplFocaFile" accept=".docx" style="display:none;" onchange="handleTplFile(event, 'foca')" />
+        <input type="file" id="tplFocaFile" accept=".docx" style="display:none;" onchange="handleTemplateFile(event, 'foca')" />
         <div class="tpl-preview" id="tplFocaPreview" style="display:none;">
           <div class="tpl-preview-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -1413,7 +1413,7 @@
             <div class="tpl-preview-name" id="tplFocaName"></div>
             <div class="tpl-preview-meta" id="tplFocaMeta"></div>
           </div>
-          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); limpiarTpl('foca');">Quitar</button>
+          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); clearTemplate('foca');">Quitar</button>
         </div>
       </div>
 
@@ -1429,7 +1429,7 @@
             <div class="tpl-formats">Formato: <strong>.docx</strong></div>
           </div>
         </div>
-        <input type="file" id="tplViuFile" accept=".docx" style="display:none;" onchange="handleTplFile(event, 'viu')" />
+        <input type="file" id="tplViuFile" accept=".docx" style="display:none;" onchange="handleTemplateFile(event, 'viu')" />
         <div class="tpl-preview" id="tplViuPreview" style="display:none;">
           <div class="tpl-preview-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -1438,7 +1438,7 @@
             <div class="tpl-preview-name" id="tplViuName"></div>
             <div class="tpl-preview-meta" id="tplViuMeta"></div>
           </div>
-          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); limpiarTpl('viu');">Quitar</button>
+          <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); clearTemplate('viu');">Quitar</button>
         </div>
       </div>
 
@@ -1505,7 +1505,7 @@
     btn.textContent = 'Verificando...';
 
     try {
-      await api('/api/login', {method: 'POST', body: JSON.stringify({email, password})});
+      await api('/api/auth/login', {method: 'POST', body: JSON.stringify({email, password})});
       await enterAdminPanel();
     } catch (err) {
       errMsg.textContent = err.message;
@@ -1524,13 +1524,13 @@
 
   async function checkAuth() {
     try {
-      const data = await api('/api/me');
+      const data = await api('/api/auth/me');
       if (data.authenticated) await enterAdminPanel();
     } catch {}
   }
 
   async function doLogout() {
-    try { await api('/api/logout', {method: 'POST'}); } catch {}
+    try { await api('/api/auth/logout', {method: 'POST'}); } catch {}
     location.reload();
   }
 
@@ -1546,11 +1546,11 @@
       // Cargar datos de la sección al navegar
       const loaders = {
         'page-dashboard': loadDashboard,
-        'page-usuarios': loadUsuarios,
-        'page-capacitaciones': loadCapacitaciones,
-        'page-emitir': loadEmitirForm,
-        'page-historial': loadHistorial,
-        'page-config': loadConfig,
+        'page-usuarios': loadUsers,
+        'page-capacitaciones': loadTrainings,
+        'page-emitir': loadIssueForm,
+        'page-historial': loadHistory,
+        'page-config': loadSettings,
       };
       if (loaders[pageId]) await loaders[pageId]();
     });
@@ -1559,26 +1559,26 @@
   // ==================== DASHBOARD ====================
   async function loadDashboard() {
     try {
-      const s = await api('/api/stats');
-      document.getElementById('statPersonas').textContent = s.totales.personas;
-      document.getElementById('statCertificados').textContent = s.totales.certificados;
+      const s = await api('/api/admin/stats');
+      document.getElementById('statPersonas').textContent = s.totals.attendees;
+      document.getElementById('statCertificados').textContent = s.totals.certificates;
       document.getElementById('statCertificadosDelta').textContent =
-        s.totales.ultimo_mes > 0 ? `+${s.totales.ultimo_mes} en los últimos 30 días` : 'Total histórico';
-      document.getElementById('statCapacitaciones').textContent = s.totales.capacitaciones;
+        s.totals.last_month > 0 ? `+${s.totals.last_month} en los últimos 30 días` : 'Total histórico';
+      document.getElementById('statCapacitaciones').textContent = s.totals.trainings;
       document.getElementById('statCursosNombres').textContent =
-        s.cursos_activos.length ? s.cursos_activos.slice(0, 3).join(' · ') : 'Ninguna creada aún';
-      document.getElementById('statUsuarios').textContent = s.totales.usuarios;
+        s.active_trainings.length ? s.active_trainings.slice(0, 3).join(' · ') : 'Ninguna creada aún';
+      document.getElementById('statUsuarios').textContent = s.totals.users;
 
       const tbody = document.getElementById('actividadRows');
-      if (!s.actividad_reciente.length) {
+      if (!s.recent_activity.length) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin actividad todavía</td></tr>`;
       } else {
-        tbody.innerHTML = s.actividad_reciente.map(a => `
+        tbody.innerHTML = s.recent_activity.map(a => `
           <tr>
-            <td class="mono">${fmtDateTime(a.fecha)}</td>
-            <td>${a.accion}</td>
-            <td>${a.detalle}</td>
-            <td>${a.por}</td>
+            <td class="mono">${fmtDateTime(a.at)}</td>
+            <td>${a.action}</td>
+            <td>${a.detail}</td>
+            <td>${a.by_user}</td>
           </tr>
         `).join('');
       }
@@ -1587,23 +1587,23 @@
     }
   }
 
-  // ==================== USUARIOS ====================
-  async function loadUsuarios() {
+  // ==================== USERS ====================
+  async function loadUsers() {
     try {
-      const {usuarios} = await api('/api/usuarios');
+      const {users} = await api('/api/admin/users');
       const tbody = document.getElementById('usuariosRows');
-      if (!usuarios.length) {
+      if (!users.length) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin usuarios creados</td></tr>`;
         return;
       }
-      tbody.innerHTML = usuarios.map(u => `
+      tbody.innerHTML = users.map(u => `
         <tr>
-          <td><strong>${escapeHtml(u.nombre)}</strong></td>
+          <td><strong>${escapeHtml(u.name)}</strong></td>
           <td class="mono">${escapeHtml(u.email)}</td>
-          <td><span class="pill ${u.rol === 'admin' ? 'pill-foca' : 'pill-viu'}">${u.rol}</span></td>
+          <td><span class="pill ${u.role === 'admin' ? 'pill-foca' : 'pill-viu'}">${u.role}</span></td>
           <td class="mono">${fmtDateTime(u.last_login_at)}</td>
           <td>
-            <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${u.id}, '${escapeHtml(u.nombre)}')">
+            <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.name)}')">
               Desactivar
             </button>
           </td>
@@ -1614,61 +1614,61 @@
     }
   }
 
-  async function crearUsuario(e) {
+  async function createUser(e) {
     e.preventDefault();
     const body = {
-      nombre: document.getElementById('userNombre').value.trim(),
+      name: document.getElementById('userNombre').value.trim(),
       email:  document.getElementById('userEmail').value.trim().toLowerCase(),
       password: document.getElementById('userPassword').value,
-      rol:    document.getElementById('userRol').value,
+      role: document.getElementById('userRol').value,
     };
     try {
-      await api('/api/usuarios', {method: 'POST', body: JSON.stringify(body)});
+      await api('/api/admin/users', {method: 'POST', body: JSON.stringify(body)});
       closeModal('modalUser');
       document.querySelector('#modalUser form').reset();
-      await loadUsuarios();
+      await loadUsers();
       toast('Usuario creado ✓');
     } catch (err) {
       toast(err.message, 'err');
     }
   }
 
-  async function eliminarUsuario(id, nombre) {
-    if (!confirm(`¿Desactivar el usuario "${nombre}"? Ya no podrá iniciar sesión.`)) return;
+  async function deleteUser(id, name) {
+    if (!confirm(`¿Desactivar el usuario "${name}"? Ya no podrá iniciar sesión.`)) return;
     try {
-      await api(`/api/usuarios?id=${id}`, {method: 'DELETE'});
-      await loadUsuarios();
+      await api(`/api/admin/users?id=${id}`, {method: 'DELETE'});
+      await loadUsers();
       toast('Usuario desactivado');
     } catch (err) {
       toast(err.message, 'err');
     }
   }
 
-  // ==================== CAPACITACIONES ====================
-  async function loadCapacitaciones() {
+  // ==================== TRAININGS ====================
+  async function loadTrainings() {
     try {
-      const {capacitaciones} = await api('/api/capacitaciones');
+      const {trainings} = await api('/api/admin/trainings');
       const grid = document.getElementById('capacitacionesGrid');
-      const cards = capacitaciones.map(c => {
-        const plantillasBadges = [];
-        if (c.tiene_plantilla_foca) plantillasBadges.push('<span class="pill pill-foca" title="Plantilla FOCA cargada">📄 FOCA</span>');
-        if (c.tiene_plantilla_viu)  plantillasBadges.push('<span class="pill pill-viu"  title="Plantilla VIU cargada">📄 VIU</span>');
-        const plantillasHTML = plantillasBadges.length
-          ? `<div style="display:flex; gap:6px; margin-top:6px;">${plantillasBadges.join('')}</div>`
+      const cards = trainings.map(t => {
+        const templateBadges = [];
+        if (t.has_template_foca) templateBadges.push('<span class="pill pill-foca" title="Plantilla FOCA cargada">📄 FOCA</span>');
+        if (t.has_template_viu)  templateBadges.push('<span class="pill pill-viu"  title="Plantilla VIU cargada">📄 VIU</span>');
+        const templatesHTML = templateBadges.length
+          ? `<div style="display:flex; gap:6px; margin-top:6px;">${templateBadges.join('')}</div>`
           : `<div style="font-size:11px; color:var(--warn); margin-top:6px;">⚠ Sin plantillas — click Editar para cargar</div>`;
         return `
         <div class="course-card">
           <div class="course-preview"><div class="doc-icon"></div></div>
           <div class="course-info">
-            <h3 class="course-name">${escapeHtml(c.nombre)}</h3>
-            <div class="course-meta">${escapeHtml(c.horas)} · ${c.emitidos} emitidos · <span class="pill pill-active" style="margin-left:4px;">${escapeHtml(c.empresa)}</span></div>
-            ${plantillasHTML}
+            <h3 class="course-name">${escapeHtml(t.name)}</h3>
+            <div class="course-meta">${escapeHtml(t.hours)} · ${t.issued_count} emitidos · <span class="pill pill-active" style="margin-left:4px;">${escapeHtml(t.company)}</span></div>
+            ${templatesHTML}
           </div>
           <div class="course-actions">
-            <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${c.vigencia_anos} años</span>
+            <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${t.validity_years} años</span>
             <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" onclick='editarCapacitacion(${JSON.stringify(c).replace(/'/g, "&#39;")})'>Editar</button>
-              <button class="btn btn-sm btn-danger" onclick="borrarCapacitacion(${c.id}, ${JSON.stringify(c.nombre)}, ${c.emitidos})">Borrar</button>
+              <button class="btn btn-sm" onclick='editTraining(${JSON.stringify(t).replace(/'/g, "&#39;")})'>Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteTraining(${t.id}, ${JSON.stringify(t.name)}, ${t.issued_count})">Borrar</button>
             </div>
           </div>
         </div>
@@ -1689,11 +1689,11 @@
     }
   }
 
-  let editandoCapId = null;
-  // Contenido temporal de las plantillas cargadas (base64) mientras el modal está abierto
-  let tplBuffer = { foca: null, viu: null };
+  let editingTrainingId = null;
+  // Temporary base64 buffer for uploaded templates while modal is open
+  let templateBuffer = { foca: null, viu: null };
 
-  async function handleTplFile(e, empresa) {
+  async function handleTemplateFile(e, company) {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 1024 * 1024) {
@@ -1703,21 +1703,22 @@
     }
     try {
       const b64 = await fileToBase64(file);
-      tplBuffer[empresa] = { nombre: file.name, data: b64, size: file.size };
-      // Mostrar preview
-      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Name`).textContent = file.name;
-      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Meta`).textContent =
+      templateBuffer[company] = { name: file.name, data: b64, size: file.size };
+      const suffix = company === 'foca' ? 'Foca' : 'Viu';
+      document.getElementById(`tpl${suffix}Name`).textContent = file.name;
+      document.getElementById(`tpl${suffix}Meta`).textContent =
         `${(file.size / 1024).toFixed(1)} KB · lista para guardar`;
-      document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Preview`).style.display = 'flex';
+      document.getElementById(`tpl${suffix}Preview`).style.display = 'flex';
     } catch (err) {
       toast('Error leyendo el archivo: ' + err.message, 'err');
     }
   }
 
-  function limpiarTpl(empresa) {
-    tplBuffer[empresa] = { nombre: '', data: '' }; // enviar vacío = borrar en el server
-    document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}Preview`).style.display = 'none';
-    document.getElementById(`tpl${empresa === 'foca' ? 'Foca' : 'Viu'}File`).value = '';
+  function clearTemplate(company) {
+    templateBuffer[company] = { name: '', data: '' }; // empty = delete on server
+    const suffix = company === 'foca' ? 'Foca' : 'Viu';
+    document.getElementById(`tpl${suffix}Preview`).style.display = 'none';
+    document.getElementById(`tpl${suffix}File`).value = '';
   }
 
   function fileToBase64(file) {
@@ -1734,51 +1735,50 @@
     });
   }
 
-  function resetTplBuffer() {
-    tplBuffer = { foca: null, viu: null };
+  function resetTemplateBuffer() {
+    templateBuffer = { foca: null, viu: null };
     document.getElementById('tplFocaPreview').style.display = 'none';
     document.getElementById('tplViuPreview').style.display = 'none';
     document.getElementById('tplFocaFile').value = '';
     document.getElementById('tplViuFile').value = '';
   }
 
-  async function crearCapacitacion(e) {
+  async function saveTraining(e) {
     e.preventDefault();
     const body = {
-      nombre: document.getElementById('capNombre').value.trim(),
-      horas:  document.getElementById('capHoras').value.trim(),
-      vigencia_anos: parseInt(document.getElementById('capVigencia').value, 10) || 2,
-      empresa: document.getElementById('capEmpresa').value,
-      categoria: document.getElementById('capCategoria').value,
-      descripcion: document.getElementById('capDescripcion').value.trim(),
+      name: document.getElementById('capNombre').value.trim(),
+      hours: document.getElementById('capHoras').value.trim(),
+      validity_years: parseInt(document.getElementById('capVigencia').value, 10) || 2,
+      company: document.getElementById('capEmpresa').value,
+      category: document.getElementById('capCategoria').value,
+      description: document.getElementById('capDescripcion').value.trim(),
     };
-    // Adjuntar plantillas solo si el usuario tocó el buffer
-    if (tplBuffer.foca) {
-      body.plantilla_foca_nombre = tplBuffer.foca.nombre;
-      body.plantilla_foca_data   = tplBuffer.foca.data;
+    if (templateBuffer.foca) {
+      body.template_foca_name = templateBuffer.foca.name;
+      body.template_foca_data = templateBuffer.foca.data;
     }
-    if (tplBuffer.viu) {
-      body.plantilla_viu_nombre = tplBuffer.viu.nombre;
-      body.plantilla_viu_data   = tplBuffer.viu.data;
+    if (templateBuffer.viu) {
+      body.template_viu_name = templateBuffer.viu.name;
+      body.template_viu_data = templateBuffer.viu.data;
     }
 
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
 
     try {
-      if (editandoCapId) {
-        await api(`/api/capacitaciones?id=${editandoCapId}`, {method: 'PATCH', body: JSON.stringify(body)});
+      if (editingTrainingId) {
+        await api(`/api/admin/trainings?id=${editingTrainingId}`, {method: 'PATCH', body: JSON.stringify(body)});
         toast('Capacitación actualizada ✓');
       } else {
-        await api('/api/capacitaciones', {method: 'POST', body: JSON.stringify(body)});
+        await api('/api/admin/trainings', {method: 'POST', body: JSON.stringify(body)});
         toast('Capacitación creada ✓');
       }
       closeModal('modalCourse');
       document.querySelector('#modalCourse form').reset();
-      resetTplBuffer();
-      editandoCapId = null;
+      resetTemplateBuffer();
+      editingTrainingId = null;
       document.querySelector('#modalCourse .modal-title').textContent = 'Nueva capacitación';
-      await loadCapacitaciones();
+      await loadTrainings();
     } catch (err) {
       toast(err.message, 'err');
     } finally {
@@ -1786,87 +1786,80 @@
     }
   }
 
-  function editarCapacitacion(c) {
-    editandoCapId = c.id;
+  function editTraining(t) {
+    editingTrainingId = t.id;
     document.querySelector('#modalCourse .modal-title').textContent = 'Editar capacitación';
-    document.getElementById('capNombre').value = c.nombre || '';
-    document.getElementById('capHoras').value = c.horas || '';
-    document.getElementById('capVigencia').value = c.vigencia_anos || 2;
-    document.getElementById('capEmpresa').value = c.empresa || 'AMBAS';
-    document.getElementById('capCategoria').value = c.categoria || 'SST';
-    document.getElementById('capDescripcion').value = c.descripcion || '';
+    document.getElementById('capNombre').value = t.name || '';
+    document.getElementById('capHoras').value = t.hours || '';
+    document.getElementById('capVigencia').value = t.validity_years || 2;
+    document.getElementById('capEmpresa').value = t.company || 'AMBAS';
+    document.getElementById('capCategoria').value = t.category || 'SST';
+    document.getElementById('capDescripcion').value = t.description || '';
 
-    // Mostrar estado de plantillas existentes
-    resetTplBuffer();
-    if (c.tiene_plantilla_foca) {
-      document.getElementById('tplFocaName').textContent = c.plantilla_foca_nombre || 'plantilla-foca.docx';
+    resetTemplateBuffer();
+    if (t.has_template_foca) {
+      document.getElementById('tplFocaName').textContent = t.template_foca_name || 'plantilla-foca.docx';
       document.getElementById('tplFocaMeta').textContent = 'Guardada · subí otra para reemplazar';
       document.getElementById('tplFocaPreview').style.display = 'flex';
     }
-    if (c.tiene_plantilla_viu) {
-      document.getElementById('tplViuName').textContent = c.plantilla_viu_nombre || 'plantilla-viu.docx';
+    if (t.has_template_viu) {
+      document.getElementById('tplViuName').textContent = t.template_viu_name || 'plantilla-viu.docx';
       document.getElementById('tplViuMeta').textContent = 'Guardada · subí otra para reemplazar';
       document.getElementById('tplViuPreview').style.display = 'flex';
     }
     openModal('modalCourse');
   }
 
-  async function borrarCapacitacion(id, nombre, emitidos) {
-    const msg = emitidos > 0
-      ? `"${nombre}" tiene ${emitidos} certificado(s) emitido(s). Se desactivará (no se borra para preservar historial). ¿Continuar?`
-      : `¿Borrar "${nombre}"? Esta capacitación no tiene certificados emitidos.`;
+  async function deleteTraining(id, name, issuedCount) {
+    const msg = issuedCount > 0
+      ? `"${name}" tiene ${issuedCount} certificado(s) emitido(s). Se desactivará (no se borra para preservar historial). ¿Continuar?`
+      : `¿Borrar "${name}"? Esta capacitación no tiene certificados emitidos.`;
     if (!confirm(msg)) return;
     try {
-      const r = await api(`/api/capacitaciones?id=${id}`, {method: 'DELETE'});
-      toast(r.action === 'eliminada' ? 'Capacitación eliminada' : 'Capacitación desactivada');
-      await loadCapacitaciones();
+      const r = await api(`/api/admin/trainings?id=${id}`, {method: 'DELETE'});
+      toast(r.action === 'deleted' ? 'Capacitación eliminada' : 'Capacitación desactivada');
+      await loadTrainings();
     } catch (err) {
       toast(err.message, 'err');
     }
   }
 
-  // ==================== EMITIR ====================
-  async function loadEmitirForm() {
+  // ==================== ISSUE ====================
+  async function loadIssueForm() {
     try {
-      // Cargar capacitaciones y stats (que incluye ciudades) en paralelo
-      const [capsData, statsData] = await Promise.all([
-        api('/api/capacitaciones'),
-        api('/api/stats').catch(() => ({ciudades: []})),
+      const [trainingsData, statsData] = await Promise.all([
+        api('/api/admin/trainings'),
+        api('/api/admin/stats').catch(() => ({cities: []})),
       ]);
 
       const sel = document.getElementById('emitCap');
       sel.innerHTML = '<option value="">-- Seleccioná --</option>' +
-        capsData.capacitaciones.filter(c => c.activa).map(c =>
-          `<option value="${c.id}">${escapeHtml(c.nombre)} · ${escapeHtml(c.horas)}</option>`
+        trainingsData.trainings.filter(t => t.active).map(t =>
+          `<option value="${t.id}">${escapeHtml(t.name)} · ${escapeHtml(t.hours)}</option>`
         ).join('');
 
-      // Poblar datalist de ciudades (sugerencias) — vienen dentro de /api/stats
       const dl = document.getElementById('ciudadesList');
       if (dl) {
-        dl.innerHTML = (statsData.ciudades || []).map(c => `<option value="${escapeHtml(c)}">`).join('');
+        dl.innerHTML = (statsData.cities || []).map(c => `<option value="${escapeHtml(c)}">`).join('');
       }
 
-      // Fecha default = hoy
       if (!document.getElementById('emitFecha').value) {
         document.getElementById('emitFecha').value = new Date().toISOString().slice(0, 10);
       }
 
-      // Resetear preview de asistentes al entrar
       const ta = document.getElementById('emitAsistentes');
-      if (ta && !ta.value) actualizarCountAsistentes();
+      if (ta && !ta.value) updateAttendeeCount();
     } catch (e) {
       toast('Error: ' + e.message, 'err');
     }
   }
 
-  function actualizarCountAsistentes() {
+  function updateAttendeeCount() {
     const ta = document.getElementById('emitAsistentes');
     if (!ta) return;
     const n = ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean).length;
-    // Sincronizar hidden field (para validación required)
     const hidden = document.getElementById('emitAsistentesHidden');
     if (hidden) hidden.value = ta.value;
-    // Actualizar badge
     const badge = document.getElementById('emitCount');
     if (badge) {
       if (n > 0) {
@@ -1876,14 +1869,12 @@
         badge.style.display = 'none';
       }
     }
-    // Actualizar resumen
     const summary = document.getElementById('asistentesSummary');
     if (summary) {
       summary.textContent = n > 0
         ? `✓ ${n} ${n === 1 ? 'persona lista para certificar' : 'personas listas para certificar'}`
         : 'Sin asistentes cargados';
     }
-    // Mostrar preview solo si hay contenido
     const preview = document.getElementById('asistentesPreview');
     if (preview) preview.style.display = n > 0 ? 'block' : 'none';
   }
@@ -1891,34 +1882,34 @@
   function toggleManualEdit() {
     const ed = document.getElementById('manualEditor');
     const btn = document.getElementById('toggleEditText');
-    const abierto = ed.style.display === 'block';
-    ed.style.display = abierto ? 'none' : 'block';
-    btn.textContent = abierto ? 'Editar manualmente' : 'Ocultar editor';
+    const isOpen = ed.style.display === 'block';
+    ed.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? 'Editar manualmente' : 'Ocultar editor';
   }
 
-  function normalizarClave(s) {
+  function normalizeKey(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
   }
 
-  function detectarColumnas(headers) {
-    // Mapea nombres de columnas del Excel a nuestros campos internos
-    const alias = {
-      cedula:  ['cedula', 'documento', 'numerodocumento', 'nrodocumento', 'noidentificacion', 'identificacion', 'cc', 'dni'],
-      nombre:  ['nombre', 'nombres', 'nombrecompleto', 'apellidosnombres', 'apellidosynombres', 'nombreyapellido'],
-      cargo:   ['cargo', 'puesto', 'rol', 'ocupacion', 'profesion'],
-      empresa: ['empresa', 'compania', 'compania', 'razonsocial', 'entidad'],
+  function detectColumns(headers) {
+    // Map Excel column names to our internal fields
+    const aliases = {
+      documentId: ['cedula', 'documento', 'numerodocumento', 'nrodocumento', 'noidentificacion', 'identificacion', 'cc', 'dni', 'documentid'],
+      name:       ['nombre', 'nombres', 'nombrecompleto', 'apellidosnombres', 'apellidosynombres', 'nombreyapellido', 'name'],
+      role:       ['cargo', 'puesto', 'rol', 'ocupacion', 'profesion', 'role'],
+      company:    ['empresa', 'compania', 'razonsocial', 'entidad', 'company'],
     };
     const map = {};
     headers.forEach((h, i) => {
-      const k = normalizarClave(h);
-      for (const [campo, aliases] of Object.entries(alias)) {
-        if (aliases.includes(k) && !(campo in map)) map[campo] = i;
+      const k = normalizeKey(h);
+      for (const [field, list] of Object.entries(aliases)) {
+        if (list.includes(k) && !(field in map)) map[field] = i;
       }
     });
     return map;
   }
 
-  async function cargarExcelAsistentes(e) {
+  async function loadAttendeesFromExcel(e) {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -1935,57 +1926,56 @@
       if (rows.length < 2) return toast('El Excel está vacío o solo tiene encabezados', 'err');
 
       const headers = rows[0].map(h => String(h || '').trim());
-      const map = detectarColumnas(headers);
+      const map = detectColumns(headers);
 
-      if (!('cedula' in map) || !('nombre' in map)) {
+      if (!('documentId' in map) || !('name' in map)) {
         return toast('No encontré columnas de "Cédula" y "Nombre". Revisá los encabezados.', 'err');
       }
 
-      const lineas = [];
-      let omitidos = 0;
+      const lines = [];
+      let skipped = 0;
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
-        const cedula = String(r[map.cedula] ?? '').replace(/\D/g, '');
-        const nombre = String(r[map.nombre] ?? '').trim();
-        const cargo  = map.cargo !== undefined ? String(r[map.cargo] ?? '').trim() : '';
-        let empresa  = map.empresa !== undefined ? String(r[map.empresa] ?? '').trim().toUpperCase() : 'FOCA';
-        if (!['FOCA', 'VIU'].includes(empresa)) empresa = 'FOCA';
-        if (!cedula || !nombre) { omitidos++; continue; }
-        lineas.push(`${cedula}, ${nombre}, ${cargo}, ${empresa}`);
+        const documentId = String(r[map.documentId] ?? '').replace(/\D/g, '');
+        const name = String(r[map.name] ?? '').trim();
+        const role = map.role !== undefined ? String(r[map.role] ?? '').trim() : '';
+        let company = map.company !== undefined ? String(r[map.company] ?? '').trim().toUpperCase() : 'FOCA';
+        if (!['FOCA', 'VIU'].includes(company)) company = 'FOCA';
+        if (!documentId || !name) { skipped++; continue; }
+        lines.push(`${documentId}, ${name}, ${role}, ${company}`);
       }
 
-      document.getElementById('emitAsistentes').value = lineas.join('\n');
-      actualizarCountAsistentes();
+      document.getElementById('emitAsistentes').value = lines.join('\n');
+      updateAttendeeCount();
 
-      toast(`${lineas.length} asistentes cargados del Excel${omitidos > 0 ? ` (${omitidos} filas omitidas)` : ''} ✓`);
-      // Limpiar file input para permitir re-subir el mismo archivo
+      toast(`${lines.length} asistentes cargados del Excel${skipped > 0 ? ` (${skipped} filas omitidas)` : ''} ✓`);
       e.target.value = '';
     } catch (err) {
       toast('Error leyendo Excel: ' + err.message, 'err');
     }
   }
 
-  async function emitirCertificados(e) {
+  async function issueCertificates(e) {
     e.preventDefault();
-    const cap = parseInt(document.getElementById('emitCap').value, 10);
-    const ciudad = document.getElementById('emitCiudad').value;
-    const fecha = document.getElementById('emitFecha').value;
-    const vence = document.getElementById('emitVence').value || null;
+    const trainingId = parseInt(document.getElementById('emitCap').value, 10);
+    const city = document.getElementById('emitCiudad').value;
+    const issueDate = document.getElementById('emitFecha').value;
+    const expiresAt = document.getElementById('emitVence').value || null;
     const raw = document.getElementById('emitAsistentes').value.trim();
 
-    if (!cap) return toast('Seleccione una capacitación', 'err');
-    if (!ciudad) return toast('Ingrese la ciudad', 'err');
-    if (!fecha) return toast('Seleccione la fecha de realización', 'err');
+    if (!trainingId) return toast('Seleccione una capacitación', 'err');
+    if (!city) return toast('Ingrese la ciudad', 'err');
+    if (!issueDate) return toast('Seleccione la fecha de realización', 'err');
     if (!raw) return toast('Cargue la lista de asistentes', 'err');
 
-    // Parsear el textarea: cada línea es "cedula, nombre, cargo, empresa"
-    const asistentes = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
+    // Parse the textarea: each line is "documentId, name, role, company"
+    const attendees = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
       const parts = line.split(',').map(p => p.trim());
       return {
-        cedula:  parts[0] || '',
-        nombre:  parts[1] || '',
-        cargo:   parts[2] || '',
-        empresa: (parts[3] || 'FOCA').toUpperCase(),
+        document_id: parts[0] || '',
+        name:        parts[1] || '',
+        role:        parts[2] || '',
+        company:     (parts[3] || 'FOCA').toUpperCase(),
       };
     });
 
@@ -1996,38 +1986,38 @@
     result.style.display = 'none';
 
     try {
-      const res = await api('/api/emitir', {
+      const res = await api('/api/admin/issue', {
         method: 'POST',
         body: JSON.stringify({
-          capacitacion_id: cap,
-          ciudad,
-          fecha,
-          valido_hasta: vence,
-          asistentes,
+          training_id: trainingId,
+          city,
+          issue_date: issueDate,
+          expires_at: expiresAt,
+          attendees,
         }),
       });
 
       result.innerHTML = `
         <div style="padding:16px 20px; background:var(--success-bg); border:1px solid color-mix(in srgb, var(--success) 30%, transparent); border-radius:6px;">
-          <div style="font-family:var(--serif); font-size:16px; font-weight:600; color:var(--success); margin-bottom:8px;">
+          <div style="font-size:16px; font-weight:600; color:var(--success); margin-bottom:8px;">
             ✓ Emisión completada
           </div>
           <div style="font-size:14px; color:var(--ink);">
-            <div><strong>${res.certificados_emitidos}</strong> certificados emitidos</div>
-            ${res.por_empresa ? `
+            <div><strong>${res.issued_certificates}</strong> certificados emitidos</div>
+            ${res.by_company ? `
               <div style="display:flex; gap:16px; margin:6px 0; font-size:13px;">
-                ${res.por_empresa.FOCA > 0 ? `<span class="pill pill-foca">FOCA: ${res.por_empresa.FOCA}</span>` : ''}
-                ${res.por_empresa.VIU  > 0 ? `<span class="pill pill-viu">VIU: ${res.por_empresa.VIU}</span>` : ''}
+                ${res.by_company.FOCA > 0 ? `<span class="pill pill-foca">FOCA: ${res.by_company.FOCA}</span>` : ''}
+                ${res.by_company.VIU  > 0 ? `<span class="pill pill-viu">VIU: ${res.by_company.VIU}</span>` : ''}
               </div>
             ` : ''}
-            <div><strong>${res.personas_creadas}</strong> personas nuevas creadas</div>
-            ${res.omitidos > 0 ? `<div style="color:var(--warn);"><strong>${res.omitidos}</strong> omitidos (ver detalles)</div>` : ''}
+            <div><strong>${res.created_attendees}</strong> personas nuevas creadas</div>
+            ${res.skipped > 0 ? `<div style="color:var(--warn);"><strong>${res.skipped}</strong> omitidos (ver detalles)</div>` : ''}
           </div>
-          ${res.errores.length ? `
+          ${res.errors.length ? `
             <details style="margin-top:12px;">
               <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft);">Ver detalles de omitidos</summary>
               <ul style="margin:8px 0 0; padding-left:20px; font-size:12.5px;">
-                ${res.errores.map(e => `<li><code>${escapeHtml(e.cedula)}</code>: ${escapeHtml(e.motivo)}</li>`).join('')}
+                ${res.errors.map(x => `<li><code>${escapeHtml(x.document_id)}</code>: ${escapeHtml(x.reason)}</li>`).join('')}
               </ul>
             </details>
           ` : ''}
@@ -2035,7 +2025,7 @@
       `;
       result.style.display = 'block';
       document.getElementById('emitAsistentes').value = '';
-      toast(`${res.certificados_emitidos} certificados emitidos`);
+      toast(`${res.issued_certificates} certificados emitidos`);
     } catch (err) {
       toast('Error: ' + err.message, 'err');
     } finally {
@@ -2044,27 +2034,26 @@
     }
   }
 
-  // ==================== HISTORIAL ====================
-  let historialCache = [];
+  // ==================== HISTORY ====================
+  let historyCache = [];
 
-  async function loadHistorial() {
+  async function loadHistory() {
     try {
-      const {certificados} = await api('/api/certificados');
-      historialCache = certificados || [];
-      // Poblar filtro de ciudades
-      const ciudades = Array.from(new Set(historialCache.map(c => c.ciudad).filter(Boolean))).sort();
-      const filtroCiudad = document.getElementById('histCiudad');
-      if (filtroCiudad) {
-        filtroCiudad.innerHTML = '<option value="">Todas las ciudades</option>' +
-          ciudades.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      const {certificates} = await api('/api/admin/certificates');
+      historyCache = certificates || [];
+      const cities = Array.from(new Set(historyCache.map(c => c.city).filter(Boolean))).sort();
+      const cityFilter = document.getElementById('histCiudad');
+      if (cityFilter) {
+        cityFilter.innerHTML = '<option value="">Todas las ciudades</option>' +
+          cities.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
       }
-      renderHistorial(historialCache);
+      renderHistory(historyCache);
     } catch (e) {
       toast('Error cargando historial: ' + e.message, 'err');
     }
   }
 
-  function renderHistorial(rows) {
+  function renderHistory(rows) {
     const tbody = document.getElementById('historialRows');
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--ink-mute);">No hay registros que coincidan con la búsqueda</td></tr>`;
@@ -2073,36 +2062,36 @@
     tbody.innerHTML = rows.map(c => `
       <tr>
         <td class="mono">${c.id}</td>
-        <td>${fmtDate(c.fecha)}</td>
-        <td>${escapeHtml(c.capacitacion)}</td>
-        <td><strong>${escapeHtml(c.nombre)}</strong></td>
-        <td class="mono">${escapeHtml(c.cedula)}</td>
-        <td>${escapeHtml(c.ciudad || '—')}</td>
+        <td>${fmtDate(c.issue_date)}</td>
+        <td>${escapeHtml(c.training_name)}</td>
+        <td><strong>${escapeHtml(c.attendee_name)}</strong></td>
+        <td class="mono">${escapeHtml(c.document_id)}</td>
+        <td>${escapeHtml(c.city || '—')}</td>
         <td style="text-align:right;"><a href="${c.pdf_url}" target="_blank" class="btn btn-sm" style="text-decoration:none;">Ver PDF</a></td>
       </tr>
     `).join('');
   }
 
-  function filtrarHistorial() {
+  function filterHistory() {
     const q = document.getElementById('histSearch').value.trim().toLowerCase();
-    const ciudad = document.getElementById('histCiudad').value;
-    const filtrado = historialCache.filter(c => {
-      if (ciudad && c.ciudad !== ciudad) return false;
+    const city = document.getElementById('histCiudad').value;
+    const filtered = historyCache.filter(c => {
+      if (city && c.city !== city) return false;
       if (q) {
-        const hay = (c.nombre || '').toLowerCase().includes(q)
-                 || (c.cedula || '').toLowerCase().includes(q)
-                 || (c.capacitacion || '').toLowerCase().includes(q);
-        if (!hay) return false;
+        const hit = (c.attendee_name || '').toLowerCase().includes(q)
+                 || (c.document_id || '').toLowerCase().includes(q)
+                 || (c.training_name || '').toLowerCase().includes(q);
+        if (!hit) return false;
       }
       return true;
     });
-    renderHistorial(filtrado);
+    renderHistory(filtered);
   }
 
-  // ==================== CONFIGURACIÓN ====================
-  async function loadConfig() {
+  // ==================== SETTINGS ====================
+  async function loadSettings() {
     try {
-      const cfg = await api('/api/config');
+      const cfg = await api('/api/admin/settings');
       document.getElementById('cfgPortalUrl').value = cfg.portal_url || '';
       document.getElementById('cfgQrBase').value = cfg.qr_base_url || '';
     } catch (e) {
@@ -2110,14 +2099,14 @@
     }
   }
 
-  async function guardarConfig(e) {
+  async function saveSettings(e) {
     e.preventDefault();
     const body = {
       portal_url: document.getElementById('cfgPortalUrl').value.trim(),
       qr_base_url: document.getElementById('cfgQrBase').value.trim(),
     };
     try {
-      await api('/api/config', {method: 'PATCH', body: JSON.stringify(body)});
+      await api('/api/admin/settings', {method: 'PATCH', body: JSON.stringify(body)});
       toast('Configuración guardada ✓');
     } catch (err) {
       toast(err.message, 'err');
