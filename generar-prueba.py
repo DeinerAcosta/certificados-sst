@@ -31,7 +31,7 @@ HORAS      = "4 horas"
 REGISTRO_ID = f"FOCA-{DOC_NUM}"
 
 # URL del portal — el QR precargará esta cédula automáticamente
-PORTAL_BASE = "https://deineracosta.github.io/certificados-sst/"
+PORTAL_BASE = "https://certificados-sst-foca.vercel.app/"
 QR_URL      = f"{PORTAL_BASE}?cc={DOC_NUM}"
 
 OUTPUT_DIR = Path(__file__).parent / "pruebas"

@@ -38,7 +38,7 @@ EXCEL       = r"C:\Users\Hector\Downloads\PLANTA FOCA.xlsx"
 TEMPLATE    = r"C:\Users\Hector\Downloads\Certificaddo FOCA VIOLENCIA SEXUAL.docx"
 
 # URL pública donde vive el portal
-PORTAL_BASE = "https://deineracosta.github.io/certificados-sst/"
+PORTAL_BASE = "https://certificados-sst-foca.vercel.app/"
 
 # ==== SALIDA ==================================================================
 BASE_DIR    = Path(__file__).parent
