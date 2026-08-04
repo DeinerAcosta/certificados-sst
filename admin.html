@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -25,7 +25,7 @@
     --danger:     #B4413C;
     --danger-bg:  #FBEDEC;
     --radius:     8px;
-    --serif:      'Instrument Serif', Georgia, 'Iowan Old Style', serif;
+    --serif:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --sans:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --mono:       'JetBrains Mono', 'SF Mono', Consolas, monospace;
     --fs-xs:      11px;
@@ -294,11 +294,11 @@
     border-bottom: 1px solid var(--line);
   }
   .page-title {
-    font-family: var(--serif);
-    font-size: 30px;
+    font-family: var(--sans);
+    font-size: 26px;
     margin: 0 0 6px;
-    font-weight: 400;
-    letter-spacing: -0.5px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
     color: var(--ink);
   }
   .page-lead {
@@ -406,11 +406,11 @@
     margin-bottom: 10px;
   }
   .stat .value {
-    font-family: var(--serif);
-    font-size: 36px;
+    font-family: var(--sans);
+    font-size: 30px;
     color: var(--ink);
     line-height: 1;
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: -0.5px;
     font-variant-numeric: tabular-nums;
   }
