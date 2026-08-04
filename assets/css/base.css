@@ -1,0 +1,136 @@
+/* ============================================================
+   base.css — design tokens, reset, typography
+   Shared by portal and admin.
+   ============================================================ */
+
+:root {
+  /* Neutrals */
+  --bg:         #F5F7FA;
+  --surface:    #FFFFFF;
+  --surface-2:  #F9FAFC;
+  --ink:        #0F2447;
+  --ink-soft:   #3A4B6B;
+  --ink-mute:   #6C7A93;
+  --line:       #E4E9F0;
+
+  /* Brand */
+  --brand:      #00467F;
+  --brand-2:    #063462;
+  --brand-tint: #E8F1FA;
+  --gold:       #B08640;
+
+  /* Semantic */
+  --success:    #2D6A4F;
+  --success-bg: #E4EFE7;
+  --warn:       #B4691C;
+  --warn-bg:    #FBF0DE;
+  --danger:     #B4413C;
+  --danger-bg:  #FBEDEC;
+
+  /* Typography */
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono:  'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Type scale */
+  --fs-xs:   11px;
+  --fs-sm:   12.5px;
+  --fs-base: 14px;
+  --fs-md:   15px;
+  --fs-lg:   18px;
+
+  /* Elevation */
+  --radius:    8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(15, 36, 71, 0.05);
+  --shadow:    0 2px 8px -2px rgba(15, 36, 71, 0.1);
+  --shadow-lg: 0 8px 24px -8px rgba(15, 36, 71, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:         #0B111C;
+    --surface:    #141B2A;
+    --surface-2:  #1A2334;
+    --ink:        #EAEEF6;
+    --ink-soft:   #B4BDD1;
+    --ink-mute:   #7C8AA8;
+    --line:       #26314A;
+    --brand:      #4A94D6;
+    --brand-2:    #1F6BB5;
+    --brand-tint: #152742;
+    --gold:       #D4AB6A;
+    --success:    #5EBF87;
+    --success-bg: #1A2E24;
+    --warn:       #E0A560;
+    --warn-bg:    #2E2318;
+    --danger:     #E88178;
+    --danger-bg:  #2E1B19;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:         #0B111C;
+  --surface:    #141B2A;
+  --surface-2:  #1A2334;
+  --ink:        #EAEEF6;
+  --ink-soft:   #B4BDD1;
+  --ink-mute:   #7C8AA8;
+  --line:       #26314A;
+  --brand:      #4A94D6;
+  --brand-2:    #1F6BB5;
+  --brand-tint: #152742;
+  --gold:       #D4AB6A;
+  --success:    #5EBF87;
+  --success-bg: #1A2E24;
+  --warn:       #E0A560;
+  --warn-bg:    #2E2318;
+  --danger:     #E88178;
+  --danger-bg:  #2E1B19;
+}
+
+:root[data-theme="light"] {
+  --bg:         #F5F7FA;
+  --surface:    #FFFFFF;
+  --surface-2:  #F9FAFC;
+  --ink:        #0F2447;
+  --ink-soft:   #3A4B6B;
+  --ink-mute:   #6C7A93;
+  --line:       #E4E9F0;
+  --brand:      #00467F;
+  --brand-2:    #063462;
+  --brand-tint: #E8F1FA;
+  --gold:       #B08640;
+  --success:    #2D6A4F;
+  --success-bg: #E4EFE7;
+  --warn:       #B4691C;
+  --warn-bg:    #FBF0DE;
+  --danger:     #B4413C;
+  --danger-bg:  #FBEDEC;
+}
+
+/* Reset */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+button { font-family: inherit; cursor: pointer; }
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: var(--fs-base);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
