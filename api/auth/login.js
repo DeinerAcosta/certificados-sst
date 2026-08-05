@@ -47,29 +47,20 @@ export default async function handler(req, res) {
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
 
-    // Anti-bruteforce delay
+    // Anti-bruteforce delay (defense in depth alongside the rate-limit table planned in Sprint 2)
     await new Promise(r => setTimeout(r, 300));
 
-    if (!password) return unauthorized(res, 'Password is required');
+    if (!email || !password) return unauthorized(res, 'Email and password are required');
 
+    // Look up user in the database — no runtime backdoors
+    const rows = await sql`
+      SELECT id, email, name, password_hash, role, active
+      FROM users
+      WHERE email = ${email}
+    `;
     let user = null;
-
-    // 1) Try DB lookup by email
-    if (email) {
-      const rows = await sql`
-        SELECT id, email, name, password_hash, role, active
-        FROM users
-        WHERE email = ${email}
-      `;
-      if (rows.length && rows[0].active && verifyPassword(password, rows[0].password_hash)) {
-        user = rows[0];
-      }
-    }
-
-    // 2) Fallback: master ADMIN_PASSWORD (empty email)
-    if (!user && !email && process.env.ADMIN_PASSWORD
-        && timingSafeStringEqual(password, process.env.ADMIN_PASSWORD)) {
-      user = { id: 0, email: 'admin@foca.co', name: 'System Administrator', role: 'admin' };
+    if (rows.length && rows[0].active && verifyPassword(password, rows[0].password_hash)) {
+      user = rows[0];
     }
 
     if (!user) return unauthorized(res, 'Invalid credentials');
