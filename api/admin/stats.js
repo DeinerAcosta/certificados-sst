@@ -1,6 +1,6 @@
 // GET /api/admin/stats — dashboard counters + recent activity + city list
 
-import { sql, json, error } from '../_db.js';
+import { sql, json, handleError } from '../_db.js';
 import { requireAuth } from '../_auth.js';
 
 const DEFAULT_CITIES = ['BARRANQUILLA', 'CARTAGENA', 'SANTA MARTA', 'VALLEDUPAR', 'RIOHACHA'];
@@ -60,6 +60,6 @@ export default async function handler(req, res) {
       cities,
     });
   } catch (e) {
-    return error(res, e.message);
+    return handleError(res, e, 'admin/stats');
   }
 }

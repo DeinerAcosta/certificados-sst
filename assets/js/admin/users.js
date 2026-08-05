@@ -10,6 +10,7 @@ async function loadUsers() {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink-mute);">Sin usuarios creados</td></tr>`;
       return;
     }
+    // Build rows safely — data comes back to us via dataset (no inline onclick with string interpolation)
     tbody.innerHTML = users.map(u => `
       <tr>
         <td><strong>${escapeHtml(u.name)}</strong></td>
@@ -17,12 +18,19 @@ async function loadUsers() {
         <td><span class="pill ${u.role === 'admin' ? 'pill-foca' : 'pill-viu'}">${escapeHtml(u.role)}</span></td>
         <td class="mono">${formatDateTime(u.last_login_at)}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.name)}')">
+          <button class="btn btn-sm btn-danger" data-action="delete-user" data-id="${u.id}" data-name="${escapeHtml(u.name)}">
             Desactivar
           </button>
         </td>
       </tr>
     `).join('');
+
+    // Wire up delete buttons via event delegation — safe from XSS
+    tbody.querySelectorAll('[data-action="delete-user"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteUser(parseInt(btn.dataset.id, 10), btn.dataset.name);
+      });
+    });
   } catch (e) {
     toast('Error cargando usuarios: ' + e.message, 'err');
   }

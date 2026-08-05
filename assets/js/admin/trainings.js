@@ -5,9 +5,14 @@
 let editingTrainingId = null;
 let templateBuffer = { foca: null, viu: null };
 
+// Cache the current list so click handlers can access typed training data without
+// serializing it into HTML attributes (which is the XSS vector).
+let trainingsCache = [];
+
 async function loadTrainings() {
   try {
     const { trainings } = await api('/api/admin/trainings');
+    trainingsCache = trainings;
     const grid = document.getElementById('capacitacionesGrid');
     const cards = trainings.map(t => {
       const badges = [];
@@ -27,15 +32,15 @@ async function loadTrainings() {
           <div class="course-actions">
             <span style="font-size:11px; color:var(--ink-mute);">Vigencia: ${t.validity_years} años</span>
             <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" onclick='editTraining(${JSON.stringify(t).replace(/'/g, "&#39;")})'>Editar</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteTraining(${t.id}, ${JSON.stringify(t.name)}, ${t.issued_count})">Borrar</button>
+              <button class="btn btn-sm" data-action="edit-training" data-id="${t.id}">Editar</button>
+              <button class="btn btn-sm btn-danger" data-action="delete-training" data-id="${t.id}">Borrar</button>
             </div>
           </div>
         </div>
       `;
     }).join('');
     const newBtn = `
-      <div class="course-card" style="border-style: dashed; background: transparent; cursor:pointer;" onclick="openModal('modalCourse')">
+      <div class="course-card" style="border-style: dashed; background: transparent; cursor:pointer;" data-action="new-training">
         <div class="course-preview" style="background: transparent;">
           <div style="font-size:40px; color: var(--ink-mute);">+</div>
         </div>
@@ -45,6 +50,23 @@ async function loadTrainings() {
         </div>
       </div>`;
     grid.innerHTML = cards + newBtn;
+
+    // Wire up buttons — pull the object from the cache by id (no HTML string injection)
+    grid.querySelectorAll('[data-action="edit-training"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = trainingsCache.find(x => x.id === parseInt(btn.dataset.id, 10));
+        if (t) editTraining(t);
+      });
+    });
+    grid.querySelectorAll('[data-action="delete-training"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = trainingsCache.find(x => x.id === parseInt(btn.dataset.id, 10));
+        if (t) deleteTraining(t.id, t.name, t.issued_count);
+      });
+    });
+    grid.querySelectorAll('[data-action="new-training"]').forEach(el => {
+      el.addEventListener('click', () => openModal('modalCourse'));
+    });
   } catch (e) {
     toast('Error cargando capacitaciones: ' + e.message, 'err');
   }

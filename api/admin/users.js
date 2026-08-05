@@ -4,7 +4,7 @@
 // DELETE /api/admin/users?id=N    → deactivate user (soft delete)
 
 import crypto from 'crypto';
-import { sql, json, error } from '../_db.js';
+import { sql, json, error, handleError } from '../_db.js';
 import { requireAuth } from '../_auth.js';
 
 function hashPassword(password) {
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
 
     return error(res, 'Method not allowed', 405);
   } catch (e) {
-    return error(res, e.message);
+    return handleError(res, e, 'admin/users');
   }
 }
 

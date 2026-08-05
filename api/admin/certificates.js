@@ -1,6 +1,6 @@
 // GET /api/admin/certificates → list all issued certificates (with joins)
 
-import { sql, json, error } from '../_db.js';
+import { sql, json, error, handleError } from '../_db.js';
 import { requireAuth } from '../_auth.js';
 
 export default async function handler(req, res) {
@@ -31,6 +31,6 @@ export default async function handler(req, res) {
 
     return error(res, 'Method not allowed', 405);
   } catch (e) {
-    return error(res, e.message);
+    return handleError(res, e, 'admin/certificates');
   }
 }

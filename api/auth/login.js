@@ -10,10 +10,30 @@ function verifyPassword(password, storedHash) {
   if (!salt || !hash) return false;
   try {
     const derived = crypto.scryptSync(password, salt, 64).toString('hex');
-    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(derived, 'hex'));
+    const a = Buffer.from(hash, 'hex');
+    const b = Buffer.from(derived, 'hex');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
   } catch {
     return false;
   }
+}
+
+/**
+ * Constant-time string comparison. Prevents timing attacks against the
+ * ADMIN_PASSWORD env-var fallback (JS === short-circuits per character).
+ */
+function timingSafeStringEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) {
+    // Still do a constant-time comparison against a same-length buffer to
+    // avoid leaking length info via early return.
+    crypto.timingSafeEqual(bufA, Buffer.alloc(bufA.length));
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 export default async function handler(req, res) {
@@ -47,7 +67,8 @@ export default async function handler(req, res) {
     }
 
     // 2) Fallback: master ADMIN_PASSWORD (empty email)
-    if (!user && !email && process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
+    if (!user && !email && process.env.ADMIN_PASSWORD
+        && timingSafeStringEqual(password, process.env.ADMIN_PASSWORD)) {
       user = { id: 0, email: 'admin@foca.co', name: 'System Administrator', role: 'admin' };
     }
 
@@ -65,8 +86,9 @@ export default async function handler(req, res) {
       user: { email: user.email, name: user.name, role: user.role },
     }));
   } catch (e) {
+    console.error('[auth/login]', e);
     res.status(500).setHeader('Content-Type', 'application/json');
-    return res.end(JSON.stringify({ error: e.message }));
+    return res.end(JSON.stringify({ error: 'Internal server error' }));
   }
 }
 

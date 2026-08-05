@@ -8,22 +8,8 @@ async function fetchAttendee(documentId) {
     if (!data.found) return null;
     return { ...data.attendee, certificates: data.certificates };
   } catch (err) {
-    console.warn('[API not available, falling back to datos.js]', err.message);
-    const local = (window.PERSONAS || {})[documentId];
-    if (!local) return null;
-    return {
-      name: local.nombre,
-      documentLabel: local.documento,
-      role: local.cargo,
-      company: local.empresa,
-      certificates: (local.certificados || []).map(c => ({
-        title: c.titulo,
-        issueDate: c.fecha,
-        expiresAt: c.valido_hasta,
-        hours: c.horas,
-        pdf: c.pdf,
-      })),
-    };
+    console.error('[lookup failed]', err.message);
+    return null;
   }
 }
 

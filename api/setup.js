@@ -2,7 +2,8 @@
 // Runs pure-SQL DO blocks that only rename tables/columns when needed,
 // so it's safe to call multiple times.
 
-import { sql, json, error } from './_db.js';
+import { sql, json, error, handleError } from './_db.js';
+import { isAuthenticated } from './_auth.js';
 import crypto from 'crypto';
 
 function hashPassword(password) {
@@ -11,9 +12,27 @@ function hashPassword(password) {
   return `${salt}:${hash}`;
 }
 
+/**
+ * Protected setup endpoint. Two ways to authorize:
+ *   1) Authenticated admin session cookie (most common), OR
+ *   2) A one-time bootstrap token in header `x-setup-token` matching env SETUP_TOKEN
+ *      (for the very first run before any admin user exists, or from CI).
+ * Anonymous requests are rejected — anyone hitting /api/setup should NOT be able
+ * to trigger schema changes or reseed the admin user.
+ */
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return error(res, 'Method not allowed', 405);
+  }
+
+  const isAdmin = isAuthenticated(req);
+  const bootstrapToken = req.headers['x-setup-token'];
+  const bootstrapValid = process.env.SETUP_TOKEN
+    && bootstrapToken
+    && bootstrapToken === process.env.SETUP_TOKEN;
+
+  if (!isAdmin && !bootstrapValid) {
+    return error(res, 'Unauthorized — setup requires admin session or valid SETUP_TOKEN header', 401);
   }
 
   try {
@@ -172,17 +191,19 @@ export default async function handler(req, res) {
       trainingId = row.id;
     }
 
+    // Seed uses fake sample data — never real PII in source code.
+    // Real attendees are inserted via /api/admin/issue (behind auth).
     await sql`
       INSERT INTO attendees (document_id, document_type, name, role, company) VALUES
-        ('1045737800', 'C.C', 'ACOSTA MORELO ANDREA DEL CARMEN', 'Aprendiz', 'FOCA'),
-        ('1002242858', 'C.C', 'ALVAREZ BARRIOS YINARIS', 'Auxiliar de Enfermería', 'FOCA')
+        ('1000000001', 'C.C', 'SAMPLE ATTENDEE ONE',   'Sample Role', 'FOCA'),
+        ('1000000002', 'C.C', 'SAMPLE ATTENDEE TWO',   'Sample Role', 'VIU')
       ON CONFLICT (document_id) DO NOTHING
     `;
 
     if (trainingId) {
       const seedCerts = [
-        ['1045737800', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
-        ['1002242858', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
+        ['1000000001', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
+        ['1000000002', 'BARRANQUILLA', '2026-03-15', '2028-03-15'],
       ];
       for (const [documentId, city, date, expiresAt] of seedCerts) {
         const existing = await sql`
@@ -212,6 +233,6 @@ export default async function handler(req, res) {
       totals: { users, attendees, trainings, certificates },
     });
   } catch (e) {
-    return error(res, `Setup failed: ${e.message}`);
+    return handleError(res, e, 'setup');
   }
 }

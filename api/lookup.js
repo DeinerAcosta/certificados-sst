@@ -2,7 +2,7 @@
 //   (backward compat also accepts ?cc=)
 // Public verification endpoint — returns attendee + their certificates.
 
-import { sql, json, error } from './_db.js';
+import { sql, json, error, handleError } from './_db.js';
 
 export default async function handler(req, res) {
   const documentId = String(req.query.document || req.query.cc || '').trim();
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       })),
     });
   } catch (e) {
-    return error(res, `Lookup failed: ${e.message}`);
+    return handleError(res, e, 'lookup');
   }
 }
 
