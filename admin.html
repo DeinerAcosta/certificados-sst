@@ -296,11 +296,15 @@
           <option value="">Todas las ciudades</option>
         </select>
       </div>
+      <div class="actions-bar" id="historyActions"></div>
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Fecha</th><th>Capacitación</th><th>Persona</th><th>Cédula</th><th>Ciudad</th><th></th></tr></thead>
-            <tbody id="historialRows"><tr><td colspan="7" style="text-align:center; padding:32px; color:var(--ink-mute);">Cargando registros…</td></tr></tbody>
+            <thead><tr>
+              <th class="col-check"><input type="checkbox" id="histSelectAll" onchange="toggleSelectAllPage(this.checked)" aria-label="Seleccionar todos los de esta página" /></th>
+              <th>#</th><th>Fecha</th><th>Capacitación</th><th>Persona</th><th>Cédula</th><th>Ciudad</th><th></th>
+            </tr></thead>
+            <tbody id="historialRows"><tr><td colspan="8" style="text-align:center; padding:32px; color:var(--ink-mute);">Cargando registros…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -499,6 +503,7 @@
 <script defer src="/assets/js/admin/users.js"></script>
 <script defer src="/assets/js/admin/trainings.js"></script>
 <script defer src="/assets/js/admin/issue.js"></script>
+<script defer src="/assets/js/admin/zip.js"></script>
 <script defer src="/assets/js/admin/history.js"></script>
 <script defer src="/assets/js/admin/settings.js"></script>
 <script defer src="/assets/js/admin/main.js"></script>

@@ -17,7 +17,6 @@ export default async function handler(req, res) {
           c.city,
           c.issue_date,
           c.expires_at,
-          c.pdf_url,
           c.issued_by,
           c.created_at
         FROM certificates c
@@ -26,7 +25,12 @@ export default async function handler(req, res) {
         ORDER BY c.created_at DESC
         LIMIT 500
       `;
-      return json(res, { certificates: rows });
+      // The stored pdf_url is ignored: rows issued before certificates were
+      // generated server-side point at static files that were never created.
+      // The route below always works, for every row.
+      return json(res, {
+        certificates: rows.map(c => ({ ...c, pdf_url: `/api/certificate/${c.id}` })),
+      });
     }
 
     return error(res, 'Method not allowed', 405);

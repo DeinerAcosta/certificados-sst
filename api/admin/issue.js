@@ -90,12 +90,19 @@ export default async function handler(req, res) {
           continue;
         }
 
-        await sql`
+        // The PDF is rendered on demand from this row by api/certificate/[id].js,
+        // so pdf_url is derived from the id rather than pointing at a file that
+        // something would later have to produce and commit.
+        const [created] = await sql`
           INSERT INTO certificates
-            (document_id, training_id, city, issue_date, expires_at, pdf_url, issued_by)
+            (document_id, training_id, city, issue_date, expires_at, issued_by)
           VALUES
-            (${documentId}, ${trainingId}, ${city},
-             ${issueDate}, ${expiresAt}, ${'certificates/' + documentId + '.pdf'}, ${issuedBy})
+            (${documentId}, ${trainingId}, ${city}, ${issueDate}, ${expiresAt}, ${issuedBy})
+          RETURNING id
+        `;
+        await sql`
+          UPDATE certificates SET pdf_url = ${'/api/certificate/' + created.id}
+          WHERE id = ${created.id}
         `;
         results.issued_certificates++;
         results.by_company[company] = (results.by_company[company] || 0) + 1;

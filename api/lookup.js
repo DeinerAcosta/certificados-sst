@@ -29,8 +29,7 @@ export default async function handler(req, res) {
         t.hours        AS hours,
         c.issue_date   AS issue_date,
         c.expires_at   AS expires_at,
-        c.city         AS city,
-        c.pdf_url      AS pdf
+        c.city         AS city
       FROM certificates c
       JOIN trainings t ON t.id = c.training_id
       WHERE c.document_id = ${documentId}
@@ -53,7 +52,9 @@ export default async function handler(req, res) {
         issueDate: formatDate(c.issue_date),
         expiresAt: formatDate(c.expires_at),
         city: c.city,
-        pdf: c.pdf,
+        // Generated on demand — see api/certificate/[id].js. The stored
+        // pdf_url is ignored; it points at static files that never existed.
+        pdf: `/api/certificate/${c.id}?download=1`,
       })),
     });
   } catch (e) {

@@ -1,11 +1,25 @@
 /* ============================================================
-   admin/history.js — history table + search / city filter + pagination
+   admin/history.js — history table: search, city filter, pagination,
+   per-row download and bulk ZIP download.
+
+   PDFs are rendered on demand by /api/certificate/:id, so every row in the
+   table is downloadable — there is no longer such a thing as a certificate
+   whose file "has not been generated yet".
    ============================================================ */
 
 let historyCache = [];
 let historyFiltered = [];
 let historyPage = 1;
 const HISTORY_PAGE_SIZE = 10;
+
+/** Certificate ids ticked by the user. Survives paging and re-filtering. */
+const historySelection = new Set();
+
+/** Parallel fetches while zipping. Enough to be quick, low enough that a
+ *  few hundred certificates do not hammer the function concurrency limit. */
+const DOWNLOAD_CONCURRENCY = 5;
+
+let activeDownload = null;
 
 async function loadHistory() {
   try {
@@ -19,10 +33,16 @@ async function loadHistory() {
     }
     historyFiltered = historyCache;
     historyPage = 1;
+    historySelection.clear();
     renderHistoryPage();
   } catch (e) {
     toast('Error cargando historial: ' + e.message, 'err');
   }
+}
+
+function currentPageRows() {
+  const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+  return historyFiltered.slice(start, start + HISTORY_PAGE_SIZE);
 }
 
 function renderHistoryPage() {
@@ -30,8 +50,9 @@ function renderHistoryPage() {
   const total = historyFiltered.length;
 
   if (!total) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--ink-mute);">No hay registros que coincidan con la búsqueda</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--ink-mute);">No hay registros que coincidan con la búsqueda</td></tr>`;
     renderPagination(0, 0);
+    renderHistoryActions();
     return;
   }
 
@@ -39,29 +60,96 @@ function renderHistoryPage() {
   if (historyPage > totalPages) historyPage = totalPages;
   if (historyPage < 1) historyPage = 1;
 
-  const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
-  const end = start + HISTORY_PAGE_SIZE;
-  const pageRows = historyFiltered.slice(start, end);
-
-  tbody.innerHTML = pageRows.map(c => `
+  tbody.innerHTML = currentPageRows().map(c => `
     <tr>
+      <td><input type="checkbox" class="row-check" data-id="${c.id}" ${historySelection.has(c.id) ? 'checked' : ''} aria-label="Seleccionar certificado ${c.id}" /></td>
       <td class="mono">${c.id}</td>
       <td>${formatDate(c.issue_date)}</td>
       <td>${escapeHtml(c.training_name)}</td>
       <td><strong>${escapeHtml(c.attendee_name)}</strong></td>
       <td class="mono">${escapeHtml(c.document_id)}</td>
       <td>${escapeHtml(c.city || '—')}</td>
-      <td style="text-align:right;">
-        <button class="btn btn-sm" data-action="view-pdf" data-url="${escapeHtml(c.pdf_url)}">Ver PDF</button>
+      <td style="text-align:right; white-space:nowrap;">
+        <button class="btn btn-sm" data-action="view" data-id="${c.id}">Ver</button>
+        <button class="btn btn-sm" data-action="download" data-id="${c.id}">Descargar</button>
       </td>
     </tr>
   `).join('');
 
-  tbody.querySelectorAll('[data-action="view-pdf"]').forEach(btn => {
-    btn.addEventListener('click', () => openPdfSafe(btn.dataset.url));
+  tbody.querySelectorAll('[data-action="view"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.open(`/api/certificate/${btn.dataset.id}`, '_blank', 'noopener,noreferrer');
+    });
+  });
+  tbody.querySelectorAll('[data-action="download"]').forEach(btn => {
+    btn.addEventListener('click', () => downloadOne(Number(btn.dataset.id)));
+  });
+  tbody.querySelectorAll('.row-check').forEach(box => {
+    box.addEventListener('change', () => {
+      const id = Number(box.dataset.id);
+      if (box.checked) historySelection.add(id); else historySelection.delete(id);
+      syncSelectAll();
+      renderHistoryActions();
+    });
   });
 
+  syncSelectAll();
   renderPagination(total, totalPages);
+  renderHistoryActions();
+}
+
+/** Header checkbox reflects the current page: checked when every visible row
+ *  is selected, indeterminate when only some are. */
+function syncSelectAll() {
+  const master = document.getElementById('histSelectAll');
+  if (!master) return;
+  const rows = currentPageRows();
+  const picked = rows.filter(c => historySelection.has(c.id)).length;
+  master.checked = rows.length > 0 && picked === rows.length;
+  master.indeterminate = picked > 0 && picked < rows.length;
+}
+
+function toggleSelectAllPage(checked) {
+  for (const c of currentPageRows()) {
+    if (checked) historySelection.add(c.id); else historySelection.delete(c.id);
+  }
+  renderHistoryPage();
+}
+
+function renderHistoryActions() {
+  const bar = document.getElementById('historyActions');
+  if (!bar) return;
+
+  const total = historyFiltered.length;
+  const pageCount = currentPageRows().length;
+  const picked = historySelection.size;
+  const filtered = total !== historyCache.length;
+
+  bar.innerHTML = `
+    <span class="page-info">
+      ${picked ? `<strong>${picked}</strong> seleccionado${picked === 1 ? '' : 's'}` : `${total} certificado${total === 1 ? '' : 's'}${filtered ? ' (filtrados)' : ''}`}
+    </span>
+    <div class="page-controls">
+      ${picked ? `<button class="btn btn-sm" data-bulk="clear">Quitar selección</button>` : ''}
+      ${picked ? `<button class="btn btn-sm btn-primary" data-bulk="selected">Descargar selección (${picked})</button>` : ''}
+      <button class="btn btn-sm" data-bulk="page" ${pageCount ? '' : 'disabled'}>Descargar página (${pageCount})</button>
+      <button class="btn btn-sm" data-bulk="all" ${total ? '' : 'disabled'}>Descargar todo (${total})</button>
+    </div>
+  `;
+
+  bar.querySelector('[data-bulk="clear"]')?.addEventListener('click', () => {
+    historySelection.clear();
+    renderHistoryPage();
+  });
+  bar.querySelector('[data-bulk="selected"]')?.addEventListener('click', () => {
+    downloadZip(historyFiltered.filter(c => historySelection.has(c.id)), 'seleccion');
+  });
+  bar.querySelector('[data-bulk="page"]')?.addEventListener('click', () => {
+    downloadZip(currentPageRows(), `pagina-${historyPage}`);
+  });
+  bar.querySelector('[data-bulk="all"]')?.addEventListener('click', () => {
+    downloadZip(historyFiltered, 'certificados');
+  });
 }
 
 function renderPagination(total, totalPages) {
@@ -125,24 +213,142 @@ function filterHistory() {
   renderHistoryPage();
 }
 
-/** Verifies the PDF exists before opening it — shows a friendly toast
- *  when the file has not been generated yet (issuance creates DB records
- *  but PDFs are produced by the local Python batch script). */
-async function openPdfSafe(url) {
+// -------------------------------------------------------------- downloads --
+
+/** Strip accents and punctuation so the name is safe on every filesystem. */
+function safeName(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function certFilename(c) {
+  const parts = [c.document_id, safeName(c.attendee_name), safeName(c.training_name)]
+    .filter(Boolean);
+  return `${parts.join(' - ')}.pdf`;
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+async function downloadOne(id) {
+  const cert = historyCache.find(c => c.id === id);
   try {
-    const r = await fetch(url, { method: 'HEAD' });
-    if (r.ok) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else if (r.status === 404) {
-      toast('El PDF aún no ha sido generado. Corré el script Python para generarlo.', 'err');
-    } else {
-      toast(`No se pudo abrir el PDF (${r.status})`, 'err');
-    }
+    const r = await fetch(`/api/certificate/${id}?download=1`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    saveBlob(await r.blob(), cert ? certFilename(cert) : `certificado-${id}.pdf`);
   } catch (e) {
-    toast('Error de red al verificar el PDF', 'err');
+    toast('No se pudo descargar el certificado: ' + e.message, 'err');
   }
+}
+
+/**
+ * Fetch every certificate in `rows` and hand the user one ZIP.
+ *
+ * Zipping in the browser rather than on the server is deliberate: rendering a
+ * few hundred PDFs inside one request would blow the serverless time limit,
+ * and this way the user sees progress and can cancel.
+ */
+async function downloadZip(rows, label) {
+  if (activeDownload) { toast('Ya hay una descarga en curso', 'err'); return; }
+  if (!rows.length) { toast('No hay certificados para descargar', 'err'); return; }
+
+  const controller = new AbortController();
+  activeDownload = controller;
+  const progress = showProgress(rows.length, () => controller.abort());
+
+  const folder = `certificados-${label}-${new Date().toISOString().slice(0, 10)}`;
+  const entries = new Array(rows.length);
+  const used = new Set();
+  const failures = [];
+  let done = 0;
+  let cursor = 0;
+
+  async function worker() {
+    for (;;) {
+      const index = cursor++;
+      if (index >= rows.length) return;
+      const cert = rows[index];
+      try {
+        const r = await fetch(`/api/certificate/${cert.id}?download=1`, { signal: controller.signal });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        entries[index] = {
+          name: `${folder}/${certFilename(cert)}`,
+          data: new Uint8Array(await r.arrayBuffer()),
+        };
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        failures.push(`${cert.document_id} (${e.message})`);
+      }
+      progress.update(++done);
+    }
+  }
+
+  try {
+    await Promise.all(
+      Array.from({ length: Math.min(DOWNLOAD_CONCURRENCY, rows.length) }, worker)
+    );
+
+    if (controller.signal.aborted) { toast('Descarga cancelada', 'err'); return; }
+
+    // Same person + same course twice would collide; keep both.
+    const packed = entries.filter(Boolean).map(entry => {
+      let name = entry.name;
+      for (let n = 2; used.has(name); n++) name = entry.name.replace(/\.pdf$/, ` (${n}).pdf`);
+      used.add(name);
+      return { name, data: entry.data };
+    });
+
+    if (!packed.length) { toast('No se pudo descargar ningún certificado', 'err'); return; }
+
+    saveBlob(buildZip(packed), `${folder}.zip`);
+    if (failures.length) {
+      toast(`${packed.length} descargados · ${failures.length} fallaron`, 'err');
+      console.warn('[certificados] fallaron:', failures);
+    } else {
+      toast(`${packed.length} certificado${packed.length === 1 ? '' : 's'} descargado${packed.length === 1 ? '' : 's'}`);
+    }
+  } finally {
+    progress.close();
+    activeDownload = null;
+  }
+}
+
+/** Fixed progress card with a cancel button; returns update/close handles. */
+function showProgress(total, onCancel) {
+  const el = document.createElement('div');
+  el.className = 'download-progress';
+  el.innerHTML = `
+    <div class="download-progress-head">
+      <strong>Preparando ZIP…</strong>
+      <button type="button" class="btn btn-sm" data-cancel>Cancelar</button>
+    </div>
+    <div class="download-progress-track"><div class="download-progress-fill"></div></div>
+    <span class="download-progress-count">0 de ${total}</span>
+  `;
+  el.querySelector('[data-cancel]').addEventListener('click', onCancel);
+  document.body.appendChild(el);
+
+  const fill = el.querySelector('.download-progress-fill');
+  const count = el.querySelector('.download-progress-count');
+  return {
+    update(done) {
+      fill.style.width = `${Math.round((done / total) * 100)}%`;
+      count.textContent = `${done} de ${total}`;
+    },
+    close() { el.remove(); },
+  };
 }
 
 window.loadHistory = loadHistory;
 window.filterHistory = filterHistory;
-window.openPdfSafe = openPdfSafe;
+window.toggleSelectAllPage = toggleSelectAllPage;

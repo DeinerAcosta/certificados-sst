@@ -493,3 +493,70 @@ td.mono {
   color: var(--success);
   margin-top: 2px;
 }
+
+/* ================ BULK ACTIONS BAR ================ */
+.actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.actions-bar:empty { display: none; }
+.actions-bar .page-controls { gap: 8px; }
+
+th.col-check, td:has(> .row-check) { width: 36px; text-align: center; }
+.row-check, #histSelectAll {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* ================ BULK DOWNLOAD PROGRESS ================ */
+.download-progress {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1100;
+  width: 280px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+}
+.download-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.download-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.download-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--brand);
+  transition: width .2s ease;
+}
+.download-progress-count {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
