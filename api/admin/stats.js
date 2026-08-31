@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const recentActivity = await sql`
       SELECT
         c.created_at AS at,
-        'Issuance' AS action,
+        'Emisión' AS action,
         t.name || ' · ' || a.name AS detail,
         COALESCE(c.issued_by, 'admin') AS by_user
       FROM certificates c

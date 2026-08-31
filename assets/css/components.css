@@ -202,6 +202,57 @@ td.mono {
   letter-spacing: .2px;
 }
 
+/* ================ PAGINATION ================ */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+  flex-wrap: wrap;
+}
+.page-info {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+.page-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.page-nav, .page-num {
+  min-width: 34px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .12s;
+}
+.page-nav:hover:not(:disabled),
+.page-num:hover:not(.active) {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.page-num.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+  cursor: default;
+}
+.page-nav:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
 /* ================ PILLS / BADGES ================ */
 .pill {
   display: inline-flex;

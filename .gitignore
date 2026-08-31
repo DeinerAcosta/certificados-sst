@@ -17,9 +17,9 @@ __pycache__/
 venv/
 
 # Word intermedios (los .docx generados se convierten a PDF y luego se descartan)
-pdfs/*.docx
-pdfs/_qr-*.png
-pdfs/~$*
+certificates/*.docx
+certificates/_qr-*.png
+certificates/~$*
 
 # Node / Vercel
 node_modules/

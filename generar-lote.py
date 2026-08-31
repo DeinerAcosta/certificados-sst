@@ -42,7 +42,7 @@ PORTAL_BASE = "https://certificados-sst-foca.vercel.app/"
 
 # ==== SALIDA ==================================================================
 BASE_DIR    = Path(__file__).parent
-PDFS_DIR    = BASE_DIR / "pdfs"
+PDFS_DIR    = BASE_DIR / "certificates"
 DATOS_JS    = BASE_DIR / "datos.js"
 PDFS_DIR.mkdir(exist_ok=True)
 
@@ -312,7 +312,7 @@ def escribir_datos_js(personas: list[dict]) -> None:
                     "fecha": FECHA,
                     "valido_hasta": VALIDO_HASTA,
                     "horas": HORAS,
-                    "pdf": f"pdfs/{p['cedula']}.pdf",
+                    "pdf": f"certificates/{p['cedula']}.pdf",
                 }
             ]
         }
