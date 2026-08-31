@@ -45,6 +45,12 @@ function currentPageRows() {
   return historyFiltered.slice(start, start + HISTORY_PAGE_SIZE);
 }
 
+/** Ticked rows, resolved against everything loaded rather than the current
+ *  filter — a row stays selected, and acted on, after the filter changes. */
+function selectedRows() {
+  return historyCache.filter(c => historySelection.has(c.id));
+}
+
 function renderHistoryPage() {
   const tbody = document.getElementById('historialRows');
   const total = historyFiltered.length;
@@ -72,6 +78,7 @@ function renderHistoryPage() {
       <td style="text-align:right; white-space:nowrap;">
         <button class="btn btn-sm" data-action="view" data-id="${c.id}">Ver</button>
         <button class="btn btn-sm" data-action="download" data-id="${c.id}">Descargar</button>
+        <button class="btn btn-sm btn-danger" data-action="delete" data-id="${c.id}">Eliminar</button>
       </td>
     </tr>
   `).join('');
@@ -83,6 +90,9 @@ function renderHistoryPage() {
   });
   tbody.querySelectorAll('[data-action="download"]').forEach(btn => {
     btn.addEventListener('click', () => downloadOne(Number(btn.dataset.id)));
+  });
+  tbody.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteOne(Number(btn.dataset.id)));
   });
   tbody.querySelectorAll('.row-check').forEach(box => {
     box.addEventListener('change', () => {
@@ -134,6 +144,7 @@ function renderHistoryActions() {
       ${picked ? `<button class="btn btn-sm btn-primary" data-bulk="selected">Descargar selección (${picked})</button>` : ''}
       <button class="btn btn-sm" data-bulk="page" ${pageCount ? '' : 'disabled'}>Descargar página (${pageCount})</button>
       <button class="btn btn-sm" data-bulk="all" ${total ? '' : 'disabled'}>Descargar todo (${total})</button>
+      ${picked ? `<button class="btn btn-sm btn-danger" data-bulk="delete">Eliminar selección (${picked})</button>` : ''}
     </div>
   `;
 
@@ -142,13 +153,16 @@ function renderHistoryActions() {
     renderHistoryPage();
   });
   bar.querySelector('[data-bulk="selected"]')?.addEventListener('click', () => {
-    downloadZip(historyFiltered.filter(c => historySelection.has(c.id)), 'seleccion');
+    downloadZip(selectedRows(), 'seleccion');
   });
   bar.querySelector('[data-bulk="page"]')?.addEventListener('click', () => {
     downloadZip(currentPageRows(), `pagina-${historyPage}`);
   });
   bar.querySelector('[data-bulk="all"]')?.addEventListener('click', () => {
     downloadZip(historyFiltered, 'certificados');
+  });
+  bar.querySelector('[data-bulk="delete"]')?.addEventListener('click', () => {
+    deleteSelected();
   });
 }
 
@@ -321,6 +335,84 @@ async function downloadZip(rows, label) {
     progress.close();
     activeDownload = null;
   }
+}
+
+// --------------------------------------------------------------- deleting --
+
+/** Certificates deleted in one request. Matches MAX_BATCH in the API. */
+const DELETE_BATCH = 500;
+
+/** Reports what the server actually removed and refreshes the table. */
+async function applyDelete(ids) {
+  const batches = [];
+  for (let i = 0; i < ids.length; i += DELETE_BATCH) {
+    batches.push(ids.slice(i, i + DELETE_BATCH));
+  }
+
+  let certs = 0;
+  let people = 0;
+  try {
+    for (const batch of batches) {
+      const r = await api('/api/admin/certificates', {
+        method: 'DELETE',
+        body: JSON.stringify({ ids: batch }),
+      });
+      certs += r.deleted_certificates || 0;
+      people += r.deleted_attendees || 0;
+    }
+  } catch (e) {
+    toast('Error al eliminar: ' + e.message, 'err');
+    await loadHistory();
+    return;
+  }
+
+  const peopleNote = people
+    ? ` · ${people} persona${people === 1 ? '' : 's'} sin certificados eliminada${people === 1 ? '' : 's'}`
+    : '';
+  toast(`${certs} certificado${certs === 1 ? '' : 's'} eliminado${certs === 1 ? '' : 's'}${peopleNote}`);
+  await loadHistory();
+}
+
+async function deleteOne(id) {
+  const cert = historyCache.find(c => c.id === id);
+  const who = cert ? `${cert.attendee_name} (${cert.document_id})` : `#${id}`;
+  const what = cert ? `\nCurso: ${cert.training_name} · ${cert.city || 'sin ciudad'}` : '';
+  const ok = confirm(
+    `¿Eliminar el certificado de ${who}?${what}\n\n`
+    + 'Si la persona no queda con ningún otro certificado, también se elimina '
+    + 'del sistema.\n\nEsta acción no se puede deshacer.'
+  );
+  if (!ok) return;
+  historySelection.delete(id);
+  await applyDelete([id]);
+}
+
+/**
+ * Bulk delete. Typing the exact count is deliberate friction: the selection
+ * can span pages and reach several hundred rows, and there is no undo.
+ */
+async function deleteSelected() {
+  const rows = selectedRows();
+  if (!rows.length) { toast('No hay certificados seleccionados', 'err'); return; }
+
+  const cities = Array.from(new Set(rows.map(c => c.city).filter(Boolean)));
+  const scope = cities.length === 1 ? ` de ${cities[0]}` : '';
+
+  const answer = prompt(
+    `Vas a eliminar ${rows.length} certificado${rows.length === 1 ? '' : 's'}${scope}.\n\n`
+    + 'Las personas que queden sin ningún certificado también se eliminarán.\n'
+    + 'Esta acción no se puede deshacer.\n\n'
+    + `Escribí ${rows.length} para confirmar:`
+  );
+  if (answer === null) return;
+  if (answer.trim() !== String(rows.length)) {
+    toast('Cancelado: el número no coincide', 'err');
+    return;
+  }
+
+  const ids = rows.map(c => c.id);
+  ids.forEach(id => historySelection.delete(id));
+  await applyDelete(ids);
 }
 
 /** Fixed progress card with a cancel button; returns update/close handles. */
