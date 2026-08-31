@@ -135,11 +135,16 @@ function renderHistoryActions() {
   const picked = historySelection.size;
   const filtered = total !== historyCache.length;
 
+  // Ticking page by page is unusable for a few hundred rows, so offer the
+  // whole filtered set in one click whenever some of it is still unticked.
+  const allFilteredPicked = total > 0 && historyFiltered.every(c => historySelection.has(c.id));
+
   bar.innerHTML = `
     <span class="page-info">
       ${picked ? `<strong>${picked}</strong> seleccionado${picked === 1 ? '' : 's'}` : `${total} certificado${total === 1 ? '' : 's'}${filtered ? ' (filtrados)' : ''}`}
     </span>
     <div class="page-controls">
+      ${allFilteredPicked ? '' : `<button class="btn btn-sm" data-bulk="select-all">Seleccionar ${total}${filtered ? ' filtrados' : ''}</button>`}
       ${picked ? `<button class="btn btn-sm" data-bulk="clear">Quitar selección</button>` : ''}
       ${picked ? `<button class="btn btn-sm btn-primary" data-bulk="selected">Descargar selección (${picked})</button>` : ''}
       <button class="btn btn-sm" data-bulk="page" ${pageCount ? '' : 'disabled'}>Descargar página (${pageCount})</button>
@@ -148,6 +153,10 @@ function renderHistoryActions() {
     </div>
   `;
 
+  bar.querySelector('[data-bulk="select-all"]')?.addEventListener('click', () => {
+    historyFiltered.forEach(c => historySelection.add(c.id));
+    renderHistoryPage();
+  });
   bar.querySelector('[data-bulk="clear"]')?.addEventListener('click', () => {
     historySelection.clear();
     renderHistoryPage();
